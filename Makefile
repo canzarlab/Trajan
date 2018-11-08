@@ -20,7 +20,7 @@ geno/%.o: geno/%.cpp
 %.o: %.cpp $(HEADERS)
 	$(CXX) -c $< $(CFLAGS) $(INCL)
 
-trajan: $(GENO_OBJS) Graph.o Greedy.o Solver.o LP.o AntichainConstraint.o Constraint.o IndependentSetConstraint.o CrossingConstraint.o newick.o BnB.o BnG.o Similarity.o LPInt.o LPCP.o LPFInt.o Parallel.o EditDist.o
+trajan: $(GENO_OBJS) Graph.o Greedy.o Solver.o LP.o AntichainConstraint.o Constraint.o IndependentSetConstraint.o CrossingConstraint.o newick.o BnB.o BnG.o Similarity.o LPInt.o LPCP.o LPFInt.o Parallel.o EditDist.o read_csv.o
 	$(CXX) -o $@ $^ $(CFLAGS)
 
 bgen: generator.o newick.o

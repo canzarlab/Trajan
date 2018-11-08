@@ -21,10 +21,13 @@
 
 #include <iostream>
 
+// global varialbe for cost matrix name
+std::string costMatrixFileName;
+
 int Solver::cf;
 bool Solver::tt;
 
-void EditDist(Graph& g1, Graph& g2);
+void EditDist(Graph& g1, Graph& g2, string &fileName, string & outFileName);
 
 Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv)
 {
@@ -38,15 +41,17 @@ Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv)
     bool dag = argc == 9;
 
     assert(LP::cf >= 0 && LP::cf <= 2);
-    assert(d == "j" || d == "s");
+    assert(d == "j" || d == "s" || d == "e");
     assert(s >= 0 && s <= 9);
+
+    string outFileName = argv[5];
 
     if (s == 0)
         return new Greedy(t1, t2, d, k, dag);
     else if (s == 1)
         return new LP(t1, t2, d, k, dag);
     else if (s == 2)
-        EditDist(t1, t2);
+        EditDist(t1, t2, costMatrixFileName, outFileName);
     else if (s == 3)
         return new LPCP(t1, t2, d, k, dag);
     else if (s == 4)
@@ -82,12 +87,20 @@ pair<Graph*, Graph*> MakeGraphs(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-    if (argc < 9 || argc > 12)
+    if (argc < 9 || argc > 13)
     {
         cout << "tree usage: " << argv[0] << " <filename.newick> <filename.newick> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>" << endl;
         cout << "dag usage: " << argv[0] << " <yeastnet> <mapping> <go> <align> <constraints> <weightfunc> <k> <solver>" << endl;
         cout << "tree usage (2): " << argv[0] << " <tree> <map> <tree> <map> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>" << endl;
         return EXIT_FAILURE;
+    }
+    // change the parser for cell hali inputs.
+    if (argc == 13){
+        costMatrixFileName = argv[5];
+        argc--;
+        for (int i = 5; i < 14; ++i){
+            argv[i] = argv[i+1];
+        }
     }
 
     Timer T;
