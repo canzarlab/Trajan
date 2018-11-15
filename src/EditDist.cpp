@@ -208,7 +208,7 @@ void PrintMatching(vvvvi& BP, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& 
             int p = D1[i][j + 1], q = D2[k][l + 1];
             int x = n - p - T1[i][j + 1], y = m - q - T2[k][l + 1];
             cout << "MATCH " << (swp ? ys : xs) << ' ' << (swp ? xs : ys) << '\n';
-            myfile << (swp ? ys : xs) << ',' << (swp ? xs : ys) << '\n';
+            myfile << (swp ? ys : xs) << ' ' << (swp ? xs : ys) << '\n';
             PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j + T1[i][j + 1], k, l + T2[k][l + 1]}, swp, myfile);
             PrintMatching(BP, L1, L2, T1, T2, D1, D2, {p + 1, x, q + 1, y}, swp, myfile);
             break;
@@ -274,5 +274,5 @@ void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName)
     ofstream myfile(outFileName);
     PrintMatching(BP, BL1, BL2, BT1, BT2, BD1, BD2, {0, 0, 0, 0}, swp, myfile);
     myfile.close();
-    clog << "DIST: " << mm << endl;
+    clog << "DIST: " << (double)mm/scale << endl;
 }
