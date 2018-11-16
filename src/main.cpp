@@ -167,6 +167,9 @@ int main(int argc, char** argv)
         argv[1] = const_cast<char*>("doNotDeleteT1.ooo");
         argv[3] = const_cast<char*>("doNotDeleteT2.ooo");
         tie(t1, t2) = MakeGraphs(argc, argv);
+        // remove files 
+        remove("doNotDeleteT1.ooo");
+        remove("doNotDeleteT2.ooo");
         Solver* solver = MakeSolver(*t1, *t2, argc, argv, t1Label2Node, t2Label2Node);
         if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
         delete solver;
