@@ -187,7 +187,8 @@ void DeallocTree(newick_node* root)
     delete root;
 }
 
-void PrintMatching(vvvvi& BP, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& D2, i4 r, bool swp, ofstream& myfile)
+void PrintMatching(vvvvi& BP, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& D2, i4 r, bool swp, 
+                   ofstream& myfile, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
 {
     int i, j, k, l;
     tie(i, j, k, l) = r;
@@ -208,30 +209,37 @@ void PrintMatching(vvvvi& BP, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& 
             int p = D1[i][j + 1], q = D2[k][l + 1];
             int x = n - p - T1[i][j + 1], y = m - q - T2[k][l + 1];
             cout << "MATCH " << (swp ? ys : xs) << ' ' << (swp ? xs : ys) << '\n';
-            myfile << (swp ? ys : xs) << ' ' << (swp ? xs : ys) << '\n';
-            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j + T1[i][j + 1], k, l + T2[k][l + 1]}, swp, myfile);
-            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {p + 1, x, q + 1, y}, swp, myfile);
+            myfile << (swp ? t2Label2Node[std::to_string(ys)] : t1Label2Node[std::to_string(xs)]) << ' ' << (swp ? t1Label2Node[std::to_string(xs)] : t2Label2Node[std::to_string(ys)]) << '\n';
+            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j + T1[i][j + 1], k, l + T2[k][l + 1]}, swp, myfile, t1Label2Node, t2Label2Node);
+            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {p + 1, x, q + 1, y}, swp, myfile, t1Label2Node, t2Label2Node);
             break;
         }
         case DEL_NODE:
             cout << (!swp ? "DEL " : "INS ") << L1[i][j + 1] << '\n';
-            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j + 1, k, l}, swp, myfile);
+            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j + 1, k, l}, swp, myfile, t1Label2Node, t2Label2Node);
             break;
         case INS_NODE:
             cout << (!swp ? "INS " : "DEL ") << L2[k][l + 1] << '\n';
-            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j, k, l + 1}, swp, myfile);
+            PrintMatching(BP, L1, L2, T1, T2, D1, D2, {i, j, k, l + 1}, swp, myfile, t1Label2Node, t2Label2Node);
             break;
     }
 }
 
-void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName)
+void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
 {
     vn n1, n2;
     int k1 = GetNumTrees(g1.GetRoot(), n1), k2 = GetNumTrees(g2.GetRoot(), n2);
     Tree& t1 = (Tree&)(k1 >= k2 ? g1 : g2), &t2 = (Tree&)(k1 >= k2 ? g2 : g1);
     bool swp = false;
     if (k2 > k1)
+    {
+        cout << "Swap two tree\n";
         swap(n1, n2), swp = true;
+        std::map<string, string> temp;
+        temp = t1Label2Node;
+        t1Label2Node = t2Label2Node;
+        t2Label2Node = temp;
+    }
 
     // read data.
     CSVReader reader(fileName);
@@ -272,7 +280,7 @@ void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName)
         DeallocTree(nroot);
     }
     ofstream myfile(outFileName);
-    PrintMatching(BP, BL1, BL2, BT1, BT2, BD1, BD2, {0, 0, 0, 0}, swp, myfile);
+    PrintMatching(BP, BL1, BL2, BT1, BT2, BD1, BD2, {0, 0, 0, 0}, swp, myfile, t1Label2Node, t2Label2Node);
     myfile.close();
     clog << "DIST: " << (double)mm/scale << endl;
 }

@@ -12,7 +12,7 @@
 #ifndef BNG_H
 #define BNG_H
 
-#define DEBUG 1
+#define DEBUG 0
 
 #include "LP.h"
 #include "Greedy.h"

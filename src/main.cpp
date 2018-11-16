@@ -18,6 +18,8 @@
 #include "LPFInt.h"
 #include "Similarity.h"
 #include "Parallel.h"
+#include "read_csv.h"
+#include <string>
 
 #include <iostream>
 
@@ -27,9 +29,9 @@ std::string costMatrixFileName;
 int Solver::cf;
 bool Solver::tt;
 
-void EditDist(Graph& g1, Graph& g2, string &fileName, string & outFileName);
+void EditDist(Graph& g1, Graph& g2, string &fileName, string & outFileName, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node);
 
-Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv)
+Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
 {
     int s = stoi(argv[argc - 1]);
     Solver::cf = stoi(argv[4 + (argc == 9) + 2 * (argc == 12)]);
@@ -51,7 +53,7 @@ Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv)
     else if (s == 1)
         return new LP(t1, t2, d, k, dag);
     else if (s == 2)
-        EditDist(t1, t2, costMatrixFileName, outFileName);
+        EditDist(t1, t2, costMatrixFileName, outFileName, t1Label2Node, t2Label2Node);
     else if (s == 3)
         return new LPCP(t1, t2, d, k, dag);
     else if (s == 4)
@@ -106,30 +108,100 @@ int main(int argc, char** argv)
     Timer T;
     T.start();
     Graph *t1, *t2;
-    tie(t1, t2) = MakeGraphs(argc, argv);
-    if (stoi(argv[argc - 1]) > 9)
-    {
-        int s = stoi(argv[argc - 1]);
-        Solver::cf = stoi(argv[4 + (argc == 9) + 2 * (argc == 12)]);
-        Solver::tt = argc == 12;
-        string d = argv[5 + (argc == 9) + 2 * (argc == 12)];
-        double k = stod(argv[6 + (argc == 9) + 2 * (argc == 12)]);
-        double c = (s != 2) ? 0 : stod(argv[8 + 2 * (argc == 12)]);
-        var_eps = (argc == 9) ? 0 : stod(argv[7 + 2 * (argc == 12)]);
-
-        assert(LP::cf >= 0 && LP::cf <= 2);
-        assert(d == "j" || d == "s" || d == "e");
-
-        ParallelSolver(*t1, *t2, d, k, argc == 9, s - 9).Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
-    }
-    else
-    {
-        Solver* solver = MakeSolver(*t1, *t2, argc, argv);
+    if (stoi(argv[argc - 1]) == 2){
+        // create two new tree.
+        string t1fName   = argv[1];
+        string t1MapfName = argv[2];
+        string t2fName   = argv[3];
+        string t2MapfName = argv[4];
+        CSVReader t1_treeReader(t1fName, " ");
+        vector<vector<string>> t1_tree = t1_treeReader.getStringData();
+        CSVReader t1_mapReader(t1MapfName, " ");
+        vector<vector<string>> t1_map = t1_mapReader.getStringData();
+        
+        CSVReader t2_treeReader(t2fName, " ");
+        vector<vector<string>> t2_tree = t2_treeReader.getStringData();
+        CSVReader t2_mapReader(t2MapfName, " ");
+        vector<vector<string>> t2_map = t2_mapReader.getStringData();
+        
+        std::map<string, string> t1Node2Label;
+        std::map<string, string> t1Label2Node;
+        std::map<string, string> t2Node2Label;
+        std::map<string, string> t2Label2Node;
+        for (const auto &u: t1_map){
+            t1Label2Node[u[0]] = u[1];
+            t1Node2Label[u[1]] = u[0];
+        }
+        for (const auto &u: t2_map){
+            t2Label2Node[u[0]] = u[1];
+            t2Node2Label[u[1]] = u[0];
+        }
+        // change the nodes for tree.
+        for (auto & u: t1_tree){
+            u[0] = t1Node2Label[u[0]];
+            u[1] = t1Node2Label[u[1]];
+        }
+        for (auto & u: t2_tree){
+            u[0] = t2Node2Label[u[0]];
+            u[1] = t2Node2Label[u[1]];
+        }
+        
+        ofstream t1NewTree("doNotDeleteT1.ooo");
+        for (auto & u: t1_tree){
+            for (auto & v: u){
+                t1NewTree << v << " ";
+            }
+            t1NewTree << endl;
+        }
+        t1NewTree.close();
+        
+        ofstream t2NewTree("doNotDeleteT2.ooo");
+        for (auto & u: t2_tree){
+            for (auto & v: u){
+                t2NewTree << v << " ";
+            }
+            t2NewTree << endl;
+        }
+        t2NewTree.close();
+        
+        argv[1] = const_cast<char*>("doNotDeleteT1.ooo");
+        argv[3] = const_cast<char*>("doNotDeleteT2.ooo");
+        tie(t1, t2) = MakeGraphs(argc, argv);
+        Solver* solver = MakeSolver(*t1, *t2, argc, argv, t1Label2Node, t2Label2Node);
         if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
         delete solver;
         delete t1;
         delete t2;
     }
+    else
+    {
+        tie(t1, t2) = MakeGraphs(argc, argv);
+        if (stoi(argv[argc - 1]) > 9)
+        {
+            int s = stoi(argv[argc - 1]);
+            Solver::cf = stoi(argv[4 + (argc == 9) + 2 * (argc == 12)]);
+            Solver::tt = argc == 12;
+            string d = argv[5 + (argc == 9) + 2 * (argc == 12)];
+            double k = stod(argv[6 + (argc == 9) + 2 * (argc == 12)]);
+            double c = (s != 2) ? 0 : stod(argv[8 + 2 * (argc == 12)]);
+            var_eps = (argc == 9) ? 0 : stod(argv[7 + 2 * (argc == 12)]);
+
+            assert(LP::cf >= 0 && LP::cf <= 2);
+            assert(d == "j" || d == "s" || d == "e");
+
+            ParallelSolver(*t1, *t2, d, k, argc == 9, s - 9).Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
+        }
+        else
+        {
+            std::map<string, string> redundantMap;
+            Solver* solver = MakeSolver(*t1, *t2, argc, argv, redundantMap, redundantMap);
+            if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
+            delete solver;
+            delete t1;
+            delete t2;
+        }
+    }
+    
     T.stop();
     clog << "TIME: " << T.secs() << " secs" << endl;
 }
