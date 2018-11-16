@@ -18,8 +18,8 @@
 
 #include <iomanip>
 
-#define PGTOL 0.1 
-#define NUMTOL 0.0125
+#define PGTOL 0.01 
+#define NUMTOL 0.00125
 #define THREADS 4
 
 BnBNode::BnBNode(vector<ET>& Triplets, size_t rows, size_t cols) : Triplets(Triplets), rows(rows), cols(cols), warm(nullptr), obj(1)
