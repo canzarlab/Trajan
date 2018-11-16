@@ -164,7 +164,7 @@ void GenTables(newick_node* root, int n, vvi& L, vvi& T, vvi& D)
     for (int i = n; i >= 0; --i)
         for (int j = 0; j <= n; ++j)
             if (newick_node* node = (i + j && i + j <= n ? GetLastRemoved(root, R, i, j) : nullptr))
-                L[i][j] = node->taxoni, T[i][j] = S[node], D[i][j] = R[node];
+                L[i][j] = stoi(node->taxon), T[i][j] = S[node], D[i][j] = R[node];
 }
 
 int OrderedEditDist(vvvvi& P, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& D2, int n, int m, vector<vector<int>> & cost_matrix)
