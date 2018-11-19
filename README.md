@@ -52,13 +52,12 @@ trajan t1.tree t1.map t2.tree t2.map distance_matrix.csv output_solution.csv 2 e
 ### Arguments ###
 Hali implements various strategies to find an (or near) optimal solution. Its non-linear solver is based on an 
 augmented Lagrangian approach. Hali can provide an optimal fractional solution or an optimal integral solution
-obtained through branch-and-cut (BnC). It can also find a (suboptimal) integral solution based on a greedy 
-strategy or enforce integrality by non-linear constraints. 
+obtained through either a fixed parameter tractable (FPT) algorithm or branch-and-cut (BnC). It can also find a (suboptimal) integral solution based on a greedy strategy or enforce integrality by non-linear constraints. 
 
 `<solver>`
   : 0=greedy  
   1=fractional  
-  2=fixed parameter tractable (FPT) algorithm (__default__) <br>
+  2=FPT algorithm (__default__) <br>
   3=covering-packing  
   4=greedy branch and bound  
   5=non-linear integral  
@@ -131,19 +130,19 @@ Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, 
   - Trajan optimization model requires penalty for each node, that it, the cost of leaving a node unmatched from the alignment. This can be computed by independent schemes (```penalty = “avg” or penalty = “max”```) or the dependent scheme based on solution of dynamic time warping (dtw).   Moreover, the user can use any self-defined penalty, stored in the last row and last column of the distance matrix (with keyword ```penalty```).
    
 #### Export the inputs for binary (C++) Trajan:
-   ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)```
-Arguments  ```t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName``` are optional. In this case, the export files will have default names: ```t1.tree, t1.map, t2.tree, t2.map, distance_matrix.csv```. 
+   ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)``` <br>
+Arguments  ```t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName``` are optional (```export(trajan)```). In this case, the export files will have default names: ```t1.tree, t1.map, t2.tree, t2.map, distance_matrix.csv```. 
 
 Finally, simply run the binary trajan with the following command line:
 
 ```trajan t1.tree t1.map t2.tree t2.map distance_matrix.csv output_solution.csv 2 e 0 0 0.0001 2```
 
-The optimal solution (alignment between ```t1``` and ```t2```) will be stored in file ```optimal_solution.csv```.  
+The optimal solution (alignment between ```t1``` and ```t2```) will be stored in file ```output_solution.csv```.  
 
 #### Visualization of the rooted trees and alignment: 
 ```plot_first_tree(trajan)``` <br>
 ```plot_second_tree(trajan)``` <br>
-```plot_solution(trajan, optimal_path = optimal_solution)```, where optimal_solution (```data.frame```) stores the optimal alignment between two trees.
+```plot_solution(trajan, optimal_path = output_solution)```, where output_solution (```data.frame```) stores the optimal alignment between the two trees.
 
 <!---
 Differentiation vs Reprogramming (Cacchiarelli, D. & Trapnell, C. et al. 2018)
