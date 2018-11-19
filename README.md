@@ -130,8 +130,8 @@ Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, 
   - Trajan optimization model requires penalty for each node, that it, the cost of leaving a node unmatched from the alignment. This can be computed by independent schemes (```penalty = “avg” or penalty = “max”```) or the dependent scheme based on solution of dynamic time warping (dtw).   Moreover, the user can use any self-defined penalty, stored in the last row and last column of the distance matrix (with keyword ```penalty```).
    
 #### Export the inputs for binary (C++) Trajan:
-   ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)``` <br>
-Arguments  ```t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName``` are optional (```export(trajan)```). In this case, the export files will have default names: ```t1.tree, t1.map, t2.tree, t2.map, distance_matrix.csv```. 
+   ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)``` __or__ ```export(trajan)``` <br>
+Arguments  ```t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName``` are optional. In this case, the export files will have default names: ```t1.tree, t1.map, t2.tree, t2.map, distance_matrix.csv```. 
 
 Finally, simply run the binary trajan with the following command line:
 
