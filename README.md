@@ -128,7 +128,7 @@ Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, 
     ``` trajan <- Trajan(t1 = t1, t1_data = t1_data, t2 = t2, t2_data = t2_data, method = “euclidean”)``` for the rooted trees input with Euclidean metric, <br>
     ```trajan <- Trajan(t1 = t1, t1_root = t1_root, t1_data = t1_data, t2 = t2, t2_root = t2_root, t2_data = t2_data, method = “pearson”)``` for the undirected version with Pearson metric. 
   
-  - Trajan optimization model requires penalty for each node, that it, the cost of leaving a node unmatched from the alignment. This can be computed by independent schemes (```penalty = “avg” or penalty = “max”```) or the dependent scheme based on solution of dynamic time warping (dtw).   However, the user can use any self-defined penalty, stored in the last row and last column of the distance matrix (with keyword ```penalty```).
+  - Trajan optimization model requires penalty for each node, that it, the cost of leaving a node unmatched from the alignment. This can be computed by independent schemes (```penalty = “avg” or penalty = “max”```) or the dependent scheme based on solution of dynamic time warping (dtw).   Moreover, the user can use any self-defined penalty, stored in the last row and last column of the distance matrix (with keyword ```penalty```).
    
 #### Export the inputs for binary (C++) Trajan:
    ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)```
