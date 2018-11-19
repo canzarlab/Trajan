@@ -18,7 +18,7 @@ make
 
 ### To begin ###
 
-First you will need to obtain a pair of trajectories (trees) using any with any of the available trajectory-building techniques (Saelens et al. 2018), over 50 trajectory inference methods have been developed since 2014. Trajan does not make any assumptions on the type of methods used to build your trajectory, one should take of converting the output in into a suitable input format for Trajan. In our examplary workflow we will describe how to transform the output obtained from Monocle (Trapnell, C. et al. 2014) into a suitable input for Trajan.
+First you will need to obtain a pair of trajectories (trees) using any of the available trajectory-building techniques (Saelens et al. 2018), over 50 trajectory inference methods have been developed since 2014. Trajan does not make any assumptions on the type of methods used to build your trajectory, one should take of converting the output in into a suitable input format for Trajan. In our examplary workflow we will describe how to transform the output obtained from Monocle (Trapnell, C. et al. 2014) into a suitable input for Trajan.
 
 In general one should provide for each tree, the following files:
 1. __Edge Set__: ```t.tree```
