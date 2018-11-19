@@ -41,7 +41,7 @@ An example of inputs is provided in the directory ```/example```.
 Once compiled. Trajan can be run easily with the following command:
 
 ```
-trajan <tree_1> <map_1> <tree_1> <map_1> <distance_matrix> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>
+trajan <tree_1> <map_1> <tree_2> <map_2> <distance_matrix> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>
 ```
 
 For our typical input:
