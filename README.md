@@ -41,7 +41,7 @@ An example of inputs is provided in the directory ```/example```.
 Once compiled. Trajan can be run easily with the following command:
 
 ```
-trajan <tree_1> <map_1> <tree_1> <map_1> <cost_matrix> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>
+trajan <tree_1> <map_1> <tree_1> <map_1> <distance_matrix> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>
 ```
 
 For our typical input:
@@ -121,10 +121,10 @@ Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, 
   - The input trees ```t1, t2``` can be either: <br>
     + 2D data.frame: each row corresponds to an arc (child, parent), or <br>
     + 2D data.frame of undirected edges ((child, parent) or (parent, child)) and roots: ```t1_root (string), t2_root (string)```.<br>
-  - A ```dissimilarity/distance matrix``` where (i,j)-entry corresponds to the distance between node ith of ```t1``` and node jth of ```t2```, row names and column names must be matched with ```t1``` nodes and ```t2``` nodes, respectively. A Trajan object is initialized as follows: <br>
+  - A ```dissimilarity/distance matrix``` where (i,j)-entry corresponds to the distance between i<sup>th</sup> node of ```t1``` and j<sup>th</sup> node of ```t2```, row names and column names must be matched with ```t1``` nodes and ```t2``` nodes, respectively. A Trajan object is initialized as follows: <br>
     ```trajan <- Trajan(t1 = t1, t2 = t2, distance_matrix = distance_matrix)``` for rooted tree input, or <br>
     ```trajan <- Trajan(t1 = t1, t1_root = t1_root, t2 = t2, t2_root = t2_root, distance_matrix = distance_matrix)``` for undirected tree with root provided. 
-  - In case the distance_matrix is not given (=NULL), it can be computed from expression matrix for the (interpolated) cells used to define the trees ```t1``` and ```t2```, stored in ```t1_data``` and ```t2_data``` in which each column corresponds to expression values of a cell.  The user can specify the [distance metrics](https://www.rdocumentation.org/packages/amap/versions/0.8-16/topics/Dist) to be used: “euclidean”, “pearson”, “spearman”, etc, controlled by parameter ```method``` :<br>
+  - In case the distance matrix is not given (=NULL), it can be computed from expression matrix for the (interpolated) cells used to define the trees ```t1``` and ```t2```, stored in ```t1_data``` and ```t2_data``` in which each column corresponds to expression values of a cell.  The user can specify the [distance metrics](https://www.rdocumentation.org/packages/amap/versions/0.8-16/topics/Dist) to be used: “euclidean”, “pearson”, “spearman”, etc, controlled by parameter ```method``` :<br>
     ``` trajan <- Trajan(t1 = t1, t1_data = t1_data, t2 = t2, t2_data = t2_data, method = “euclidean”)``` for the rooted trees input with Euclidean metric, <br>
     ```trajan <- Trajan(t1 = t1, t1_root = t1_root, t1_data = t1_data, t2 = t2, t2_root = t2_root, t2_data = t2_data, method = “pearson”)``` for the undirected version with Pearson metric. 
   
