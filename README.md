@@ -18,9 +18,9 @@ make
 
 ### To begin ###
 
-First you will need to obtain a pair of trajectories (trees) using any of the available trajectory-building techniques (Saelens et al. 2018), over 50 trajectory inference methods have been developed since 2014. Trajan does not make any assumptions on the type of methods used to build your trajectory, one should take of converting the output in into a suitable input format for Trajan. In our examplary workflow we will describe how to transform the output obtained from Monocle (Trapnell, C. et al. 2014) into a suitable input for Trajan.
+First you will need to obtain a pair of trajectories (trees) using any of the available trajectory-building techniques (Saelens et al. 2018), over 50 trajectory inference methods have been developed since 2014. Trajan does not make any assumptions on the type of methods used to build your trajectory, one should take care of converting the output into a suitable input format for Trajan. In our examplary workflow we will describe how to transform the output obtained from Monocle (Trapnell, C. et al. 2014) into a suitable input for Trajan.
 
-In general one should provide for each tree, the following files:
+In general one should provide for each tree, the following files (input/output formats are described in more detail below):
 1. __Edge Set__: ```t.tree```
 2. __Map__: ```t.map```
 
@@ -38,7 +38,7 @@ An example of inputs is provided in the directory ```/example```.
 
 ### Usage ###
 
-Once compiled. Trajan can be run easily with the following command:
+Once you have compiled Trajan it can be run easily with the following command:
 
 ```
 trajan <tree_1> <map_1> <tree_2> <map_2> <distance_matrix> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>
@@ -49,7 +49,9 @@ For our typical input:
 ```
 trajan t1.tree t1.map t2.tree t2.map distance_matrix.csv output_solution.csv 2 e 0 0 0.0001 2 
 ```
+
 ### Arguments ###
+
 Hali implements various strategies to find an (or near) optimal solution. Its non-linear solver is based on an 
 augmented Lagrangian approach. Hali can provide an optimal fractional solution or an optimal integral solution
 obtained through either a fixed parameter tractable (FPT) algorithm or branch-and-cut (BnC). It can also find a (suboptimal) integral solution based on a greedy strategy or enforce integrality by non-linear constraints. 
@@ -92,8 +94,6 @@ Output:
 
 #### Model adjustment
 
-
-   
 `<constraints>`
   : 0=unconstrained matching   
   1=forbid crossing edges  
@@ -104,19 +104,21 @@ Output:
 
 #### Miscellaneous   
    
-   
 `<vareps>`
-  : edge weight threshold (all edges with weight below vareps will be ignored) - default 0
+  : edge weight threshold (all edges with weight below vareps will be ignored) - (__default 0__)
 
 `<coneps>`
-  : tolerance - default 1e-6
+  : tolerance - (__default 1e-6__)
 
 ## Example Workflow using Monocle generated Trajectories ## 
-This section provides an example where the complex trajectories are inferred from HSMM and Fib-MyoD scRNA-seq datasets. The binary (C++) trajan software only takes the input described as above. To handle different inputs (from Monocle 2 and other trajectory-building tools) and to visualize the trees and the alignment, we provide R scripts with examples (```examples.R```) in the directory ```/Rscripts```. Various input types are handled in a following single Trajan R object: 
+
+This section provides an example where scRNA-seq (complex) trajectories are inferred from HSMM (Trapnell, C. et al. 2014) and Fib-MyoD (Cacchiarelli, D. & Trapnell, C. et al. 2018) datasets. The compiled version of Trajan will only take inputs formated in the way described above. To handle different formats as obtained (from Monocle or other trajectory-building tools) output, visualize trees and alignment, we provide an R script with examples (```examples.R```) in the directory ```/Rscripts```.
+
+Various input types can be easily handled by generating a single Trajan Object. This Trajan Object will allow the user to export the data in the correct input format for Trajan:
 ```
 Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, distance_matrix = NULL, penalty = "avg", method = "euclidean")
 ```
-  - The inputs ```t1, t2, t1_data, t2_data, distance_matrix``` must be of a data.frame.
+  - The inputs ```t1, t2, t1_data, t2_data, distance_matrix``` must be of type data.frame.
   - The input trees ```t1, t2``` can be either: <br>
     + 2D data.frame: each row corresponds to an arc (child, parent), or <br>
     + 2D data.frame of undirected edges ((child, parent) or (parent, child)) and roots: ```t1_root (string), t2_root (string)```.<br>
@@ -129,7 +131,8 @@ Trajan (t1, t1_root = NULL, t2, t2_root = NULL, t1_data = NULL, t2_data = NULL, 
   
   - Trajan optimization model requires penalty for each node, that it, the cost of leaving a node unmatched from the alignment. This can be computed by independent schemes (```penalty = “avg” or penalty = “max”```) or the dependent scheme based on solution of dynamic time warping (dtw).   Moreover, the user can use any self-defined penalty, stored in the last row and last column of the distance matrix (with keyword ```penalty```).
    
-#### Export the inputs for binary (C++) Trajan:
+#### Export data for Trajan input:
+
    ```export(trajan, t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName)``` __or__ ```export(trajan)``` <br>
 Arguments  ```t1_treefileName, t1_mapfileName, t2_treefileName, t2_mapfileName, distance_matrixfileName``` are optional. In this case, the export files will have default names: ```t1.tree, t1.map, t2.tree, t2.map, distance_matrix.csv```. 
 
@@ -156,7 +159,7 @@ Differentiation vs Reprogramming (Cacchiarelli, D. & Trapnell, C. et al. 2018)
 <div id="ref-trapnell:2014">
   
 The dynamics and regulators of cell fate decisions are revealed by pseudotemporal ordering of single cells
-Cole Trapnell  et al. Nature Biotechnology volume 32, pages 381–386 (2014)
+Trapnell, C. et al. Nature Biotechnology volume 32, pages 381–386 (2014)
 <https://doi.org/10.1038/nbt.2859>
 
 </div>
