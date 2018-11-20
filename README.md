@@ -158,7 +158,7 @@ Differentiation vs Reprogramming (Cacchiarelli, D. & Trapnell, C. et al. 2018)
 
 <div id="ref-trapnell:2014">
   
-The dynamics and regulators of cell fate decisions are revealed by pseudotemporal ordering of single cells
+The dynamics and regulators of cell fate decisions are revealed by pseudotemporal ordering of single cells.
 Trapnell, C. et al. Nature Biotechnology volume 32, pages 381–386 (2014)
 <https://doi.org/10.1038/nbt.2859>
 
@@ -175,7 +175,7 @@ Cacchiarelli, D. & Trapnell, C. et al. Cell Syst. 7(3), 258-268 (2018).
 
 <div id="ref-alpert:2018">
 
-Alignment of single-cell trajectories to compare cellular expression dynamics
+Alignment of single-cell trajectories to compare cellular expression dynamics.
 Ayelet Alpert, Lindsay S Moore, Tania Dubovik & Shai S Shen-Orr.
 Nature Methods volume 15, pages 267–270 (2018)
 <https://doi.org/10.1038/nmeth.4628>.
@@ -184,7 +184,7 @@ Nature Methods volume 15, pages 267–270 (2018)
 
 <div id="ref-Saelens:2018">
 
-A comparison of single-cell trajectory inference methods: towards more accurate and robust tools
+A comparison of single-cell trajectory inference methods: towards more accurate and robust tools.
 Wouter Saelens, Robrecht Cannoodt, Helena Todorov, Yvan Saeys.
 bioRxiv (2018)
 <https://doi.org/10.1101/276907>.
