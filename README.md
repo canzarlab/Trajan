@@ -65,8 +65,8 @@ obtained through either a fixed parameter tractable (FPT) algorithm or branch-an
   5=non-linear integral  
   6=warm-start integral from fractional <br>
   7=BnC with breadth-first-search strategy <br>
-  8=BnC with depth-first-search stategy <br>
-  9=BnC with hybrid scheme (combine 7 & 8)
+  8=BnC with depth-first-search strategy <br>
+  9=BnC with hybrid approach (combine 7 & 8)
 
 Options 3,4 and 6 combine different solver strategies that require problem specific tuning. 
 
