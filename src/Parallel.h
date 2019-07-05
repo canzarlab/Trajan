@@ -30,7 +30,7 @@ public:
     ParallelSolver(Graph& t1, Graph& t2, string d, double k, bool dag, int nthreads);
   
     // Solves the model and writes it down to "filename".
-    void Solve(string filename);
+    void Solve(string filename, string outScoreFile = "score.csv");
 
     // Updates the best upper bound and solution with regards to locking.
     bool PushUB(Vector& var, double  val, GenericBnBSolver& solver);

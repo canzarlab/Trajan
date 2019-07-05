@@ -55,7 +55,7 @@ GenericBnBSolver* MakeSolver(Graph& t1, Graph& t2, string d, double k, bool dag,
 }
 
 ParallelSolver::ParallelSolver(Graph& t1, Graph& t2, string d, double k, bool dag, int nthreads) :
-    thr_num(max(1, min(nthreads, MAX_THREADS))), t1(t1), t2(t2), d(d), k(k), dag(dag), sol(0), sys_ub(666)
+    thr_num(max(1, min(nthreads, MAX_THREADS))), t1(t1), t2(t2), d(d), k(k), dag(dag), sol(0), sys_ub(1e20)
 {
 }
 
@@ -97,7 +97,7 @@ void ParallelSolver::Callback(string filename, GenericBnBSolver* solver)
     thr_cond.notify_all();
 }
 
-void ParallelSolver::Solve(string filename)
+void ParallelSolver::Solve(string filename, string outScoreFile)
 {
     GenericBnBSolver* S[thr_num];
     thread T[thr_num];

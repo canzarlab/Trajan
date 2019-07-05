@@ -18,7 +18,7 @@ class LPFInt : public LPInt
 public:
     LPFInt(Graph& t1, Graph& t2, string d, double k, bool dag);
 
-    virtual void Solve(string filename) override;
+    virtual void Solve(string filename, string outScoreFile = "score.csv") override;
 };
 
 #endif

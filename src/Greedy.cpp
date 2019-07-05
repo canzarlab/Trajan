@@ -47,7 +47,7 @@ Greedy::Greedy(Graph& t1, Graph& t2, string d, double k, vvi& K, map<size_t, boo
     sort(E.begin(), E.end(), [](const iid& a, const iid& b){return get<2>(a) > get<2>(b);});
 }
 
-void Greedy::Solve(string filename)
+void Greedy::Solve(string filename, string outScoreFile)
 {
     for (const iid& e : E)
         if (all_of(M.begin(), M.end(), bind(&Greedy::CC, this, _1, cref(e))))

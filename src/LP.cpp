@@ -50,7 +50,7 @@ void LP::MatchingConstraints()
     warm_y = Vector::Zero(nr_rows);
 }
 
-void LP::Solve(string filename)
+void LP::Solve(string filename, string outScoreFile)
 {
     int cnt = 1;
     for (int i = 0; cnt; i++)
@@ -123,7 +123,7 @@ void LP::WriteSolution(string fileName)
             if (K[i][j] != -1 && x(K[i][j]) > 0)
             {
                 weight += x(K[i][j]) * c(K[i][j]);
-                sol_file << n1[i]->taxon << " " << n2[j]->taxon << " " << x(K[i][j]) << "\n";
+                sol_file << n1[i]->taxon << " " << n2[j]->taxon << " " << x(K[i][j]) << "\n"; 
             }
         }
     }

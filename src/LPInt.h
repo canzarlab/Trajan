@@ -20,7 +20,7 @@ class LPInt : public LP
 public:
     LPInt(Graph& t1, Graph& t2, string d, double k, bool dag);
 
-    virtual void Solve(string filename) override;
+    virtual void Solve(string filename, string outScoreFile = "score.csv") override;
 private:
     bool CC(const ii& a, const ii& b) const;
     void AddConstraint(const ii& a, const ii& b);

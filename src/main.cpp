@@ -8,6 +8,8 @@
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 */
+#include <iostream>
+#include <string>
 #include "Timer.h"
 #include "Greedy.h"
 #include "LP.h"
@@ -19,17 +21,16 @@
 #include "Similarity.h"
 #include "Parallel.h"
 #include "read_csv.h"
-#include <string>
-
-#include <iostream>
 
 // global varialbe for cost matrix name
 std::string costMatrixFileName;
+// global variable for score name
+std::string outScoreFile;
 
 int Solver::cf;
 bool Solver::tt;
 
-void EditDist(Graph& g1, Graph& g2, string &fileName, string & outFileName, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node);
+void EditDist(Graph& g1, Graph& g2, string & fileName, string & outSolution, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node, string & outScore);
 
 Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
 {
@@ -53,7 +54,7 @@ Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv, std::map<string,
     else if (s == 1)
         return new LP(t1, t2, d, k, dag);
     else if (s == 2)
-        EditDist(t1, t2, costMatrixFileName, outFileName, t1Label2Node, t2Label2Node);
+        EditDist(t1, t2, costMatrixFileName, outFileName, t1Label2Node, t2Label2Node, outScoreFile);
     else if (s == 3)
         return new LPCP(t1, t2, d, k, dag);
     else if (s == 4)
@@ -89,7 +90,7 @@ pair<Graph*, Graph*> MakeGraphs(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-    if (argc < 9 || argc > 13)
+    if (argc < 9 || argc > 14)
     {
         cout << "tree usage: " << argv[0] << " <filename.newick> <filename.newick> <align> <constraints> <weightfunc> <k> <vareps> <coneps> <solver>" << endl;
         cout << "dag usage: " << argv[0] << " <yeastnet> <mapping> <go> <align> <constraints> <weightfunc> <k> <solver>" << endl;
@@ -97,11 +98,12 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     // change the parser for cell hali inputs.
-    if (argc == 13){
+    if (argc == 14){
         costMatrixFileName = argv[5];
-        argc--;
-        for (int i = 5; i < 14; ++i){
-            argv[i] = argv[i+1];
+        outScoreFile = argv[6];
+        argc = argc-2;
+        for (int i = 5; i < 15; ++i){
+            argv[i] = argv[i+2];
         }
     }
 
@@ -192,13 +194,13 @@ int main(int argc, char** argv)
             assert(LP::cf >= 0 && LP::cf <= 2);
             assert(d == "j" || d == "s" || d == "e");
 
-            ParallelSolver(*t1, *t2, d, k, argc == 9, s - 9).Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
+            ParallelSolver(*t1, *t2, d, k, argc == 9, s - 9).Solve(argv[3 + (argc == 9) + 2 * (argc == 12)], outScoreFile);
         }
         else
         {
             std::map<string, string> redundantMap;
             Solver* solver = MakeSolver(*t1, *t2, argc, argv, redundantMap, redundantMap);
-            if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
+            if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)], outScoreFile);
             delete solver;
             delete t1;
             delete t2;

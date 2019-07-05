@@ -57,11 +57,11 @@ void BnBNode::FixVar(size_t index, double val)
 }
 
 GenericBnBSolver::GenericBnBSolver(Graph& t1, Graph& t2, string dist, double k, bool dag) : 
-    LP(t1, t2, dist, k, dag), sys_ub(666), finished(0), thr_no(THREADS)
+    LP(t1, t2, dist, k, dag), sys_ub(1e20), finished(0), thr_no(THREADS)
 {    
 }
 
-void GenericBnBSolver::Solve(string filename)
+void GenericBnBSolver::Solve(string filename, string outScoreFile)
 {
     this->filename = filename;
     
@@ -121,6 +121,10 @@ void GenericBnBSolver::Solve(string filename)
             x(i) = round(x(i));    
         if (filename != "") 
             WriteSolution(filename);     
+        // write the objective function 
+        ofstream score(outScoreFile);
+        score << moptVal << endl;
+        score.close();
     }
 
 #if DEBUG == 1    

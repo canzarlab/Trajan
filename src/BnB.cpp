@@ -33,7 +33,7 @@ double gap_amount = 0;
 bool   gap_flag   = 0;
 #endif
 
-void BnB::Solve(string filename)
+void BnB::Solve(string filename, string outScoreFile)
 {
 #if DEBUG == 1
     Timer T;

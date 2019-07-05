@@ -24,7 +24,7 @@ public:
     Greedy(Graph& t1, Graph& t2, string d, double k, bool dag);    
     Greedy(Graph& t1, Graph& t2, string d, double k, vvi& K, map<size_t, bool>& M);
 
-    virtual void Solve(string filename) override;
+    virtual void Solve(string filename, string outScoreFile = "score.csv") override;
     void WriteSolution(string fileName) override;
     double GetSolution();
     void GetSolution(vvi& K, Vector& v, double& d);

@@ -27,7 +27,7 @@ public:
     LP(Graph& t1, Graph& t2, string d, double k, bool dag);
     ~LP();
 
-    virtual void Solve(string filename);
+    virtual void Solve(string filename, string outScoreFile = "score.csv");
     void WriteSolution(string fileName);
 
 protected:

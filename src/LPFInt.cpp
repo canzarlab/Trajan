@@ -14,7 +14,7 @@ LPFInt::LPFInt(Graph& t1, Graph& t2, string d, double k, bool dag) : LPInt(t1, t
 {
 }
 
-void LPFInt::Solve(string filename)
+void LPFInt::Solve(string filename, string outScoreFile)
 {
     LP::Solve(filename);
     LPInt::Solve(filename);

@@ -92,7 +92,7 @@ public:
     GenericBnBSolver(Graph& t1, Graph& t2, string dist, double k, bool dag);
 
     // Solves the problem and writes the solution to the file. If no file is required pass an empty string.
-    void Solve(string filename) override; 
+    void Solve(string filename, string outScoreFile = "score.csv") override; 
 
     Vector GetSolution()  { return sys_sol; } // Returns the current solution (copy).
     double GetObjective() { return sys_ub; }  // Returns the current objective function value.

@@ -1,9 +1,9 @@
 /*
     Copyright (C) 2018 Mislav Blažević
 
-    This file is part of Trajan.
+    This file is part of Hali.
 
-    Trajan is free software: you can redistribute it and/or modify
+    Hali is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -20,8 +20,12 @@ public:
     Solver(Graph& t1, Graph& t2, string d, double k, bool dag);
 
     virtual ~Solver() {}
-    virtual void Solve(string filename) = 0;
+    virtual void Solve(string filename, string outScoreFile = "score.csv") = 0;
     virtual void WriteSolution(string fileName) = 0;
+    std::vector<std::pair<int, int>> get_solution;
+//     double optVal;
+    double moptVal;
+    double scaleCoef = 1.0;
 
     static int cf;
     static bool tt;
@@ -44,6 +48,7 @@ private:
     double TumorDist(double weight) const;
     double SymdifDist(double weight) const;
     double JaccardDist(double weight) const;
+    std::vector<std::vector<double>> cost_matrix;
 };
 
 template <class F>
@@ -65,8 +70,10 @@ void Solver::DFSRight(newick_node* nodel, newick_node* noder, vb& Q, F f)
     Q[noder->taxoni] = true;
     if (d == "j")
         f(nodel, noder, JaccardSim(t1.clade[nodel], t2.clade[noder], k));
-    else
+    else if (d == "s")
         f(nodel, noder, SymdifSim(t1.clade[nodel], t2.clade[noder]));
+    else
+    	f(nodel, noder, EditDistance(*t1.clade[nodel].begin(), *t2.clade[noder].begin(), cost_matrix));
 
     for (newick_child* child = noder->child; child; child = child->next)
         if (!Q[child->node->taxoni])

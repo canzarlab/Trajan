@@ -1,9 +1,9 @@
 /*
     Copyright (C) 2018 Mislav Blažević
 
-    This file is part of Trajan.
+    This file is part of Hali.
 
-    Trajan is free software: you can redistribute it and/or modify
+    Hali is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -218,7 +218,7 @@ void Tree::Leaf(newick_node* node)
 void Tree::Child(newick_node* node, newick_node* child)
 {
     ls &cl = clade[node], &cr = clade[child];
-    cl.insert(cl.end(), cr.begin(), cr.end());
+//     cl.insert(cl.end(), cr.begin(), cr.end());
 }
 
 void LDAG::Relation(int l, int i)

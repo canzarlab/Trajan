@@ -225,7 +225,7 @@ void PrintMatching(vvvvi& BP, vvi& L1, vvi& L2, vvi& T1, vvi& T2, vvi& D1, vvi& 
     }
 }
 
-void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
+void EditDist(Graph& g1, Graph& g2, string & fileName, string & outSolution, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node, string & outScore)
 {
     vn n1, n2;
     int k1 = GetNumTrees(g1.GetRoot(), n1), k2 = GetNumTrees(g2.GetRoot(), n2);
@@ -279,8 +279,11 @@ void EditDist(Graph& g1, Graph& g2, string & fileName, string & outFileName, std
         }
         DeallocTree(nroot);
     }
-    ofstream myfile(outFileName);
+    ofstream myfile(outSolution);
     PrintMatching(BP, BL1, BL2, BT1, BT2, BD1, BD2, {0, 0, 0, 0}, swp, myfile, t1Label2Node, t2Label2Node);
     myfile.close();
     clog << "DIST: " << (double)mm/scale << endl;
+    ofstream score(outScore);
+    score << (double)mm/scale << endl;
+    score.close();
 }
