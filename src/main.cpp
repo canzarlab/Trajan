@@ -106,6 +106,13 @@ int main(int argc, char** argv)
             argv[i] = argv[i+2];
         }
     }
+    if (argc == 13){
+        costMatrixFileName = argv[5];
+        argc = argc-1;
+        for (int i = 5; i < 14; ++i){
+            argv[i] = argv[i+1];
+        }
+    }
 
     Timer T;
     T.start();
@@ -193,7 +200,6 @@ int main(int argc, char** argv)
 
             assert(LP::cf >= 0 && LP::cf <= 2);
             assert(d == "j" || d == "s" || d == "e");
-
             ParallelSolver(*t1, *t2, d, k, argc == 9, s - 9).Solve(argv[3 + (argc == 9) + 2 * (argc == 12)], outScoreFile);
         }
         else

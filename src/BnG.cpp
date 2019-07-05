@@ -124,6 +124,7 @@ void GenericBnBSolver::Solve(string filename, string outScoreFile)
         // write the objective function 
         ofstream score(outScoreFile);
         score << moptVal << endl;
+        cout << "my score: "  << moptVal << endl;
         score.close();
     }
 

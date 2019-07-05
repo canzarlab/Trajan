@@ -77,7 +77,7 @@ bool ParallelSolver::Finished()
     return sol; 
 }
 
-void ParallelSolver::Callback(string filename, GenericBnBSolver* solver)
+void ParallelSolver::Callback(string filename,string outScoreFile, GenericBnBSolver* solver)
 {
 #if DEBUG == 1
     solver->debug_file = filename + '_' + typeid(*solver).name();
@@ -93,6 +93,11 @@ void ParallelSolver::Callback(string filename, GenericBnBSolver* solver)
         cout << typeid(*solver).name() << endl;
         thr_slock.unlock();
         solver->WriteSolution(filename);    
+        // write the objective function 
+        ofstream score(outScoreFile);
+        score << solver->moptVal << endl;
+        // cout << "my score: "  << solver->moptVal << endl;
+        score.close();
     }
     thr_cond.notify_all();
 }
@@ -106,7 +111,7 @@ void ParallelSolver::Solve(string filename, string outScoreFile)
     for (int i = 0; i < thr_num; ++i)
     {
         S[i] = MakeSolver(t1, t2, d, k, dag, i, *this);
-        T[i] = thread{&ParallelSolver::Callback, this, filename, S[i]};
+        T[i] = thread{&ParallelSolver::Callback, this, filename,outScoreFile, S[i]};
     }
 
     unique_lock<mutex> lock{m};

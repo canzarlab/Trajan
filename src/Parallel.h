@@ -43,7 +43,7 @@ public:
 
 private:
 
-    void Callback(string filename, GenericBnBSolver* solver);
+    void Callback(string filename,string outScoreFile, GenericBnBSolver* solver);
     
     // threading locks and return values
     mutex                             thr_block; // Locks the best upper bound.
