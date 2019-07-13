@@ -267,7 +267,7 @@ void EditDist(Graph& g1, Graph& g2, string & fileName, string & outSolution, std
         vvi T1(n + 1, vi(n + 1, 1)), T2(m + 1, vi(m + 1, 1));
         vvi D1(n + 1, vi(n + 1, -1)), D2(m + 1, vi(m + 1, -1));
         GenTables(t1.GetRoot(), n, L1, T1, D1);
-        GenTables(t2.GetRoot(), m, L2, T2, D2);
+        GenTables(nroot, m, L2, T2, D2);
         vvvvi NP(n + 1, vvvi(n + 1, vvi(m + 1, vi(m + 1, -1))));
         int nm = OrderedEditDist(NP, L1, L2, T1, T2, D1, D2, n, m, scale_cost_matrix);
         if (nm < mm)
