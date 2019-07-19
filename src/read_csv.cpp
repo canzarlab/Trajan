@@ -65,14 +65,18 @@ std::vector<std::vector<double> > CSVReader::getDoubleData(int from_row, int to_
             istringstream ss(s);
             vector<double> record;
             int removefist = 0;
- 
+            
             while (ss) {
                 string line;
                 if (!getline(ss, line, ','))
+                {
                     break;
+                }
                 try {
-                    if (removefist >= 0)    // matrix
-                    record.push_back(stof(line));
+                    if (removefist >= 0){ // matrix
+                        record.push_back(stod(line));
+                    }    
+                    
                     else
                         removefist++;
                 }

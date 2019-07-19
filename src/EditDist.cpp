@@ -244,6 +244,7 @@ void EditDist(Graph& g1, Graph& g2, string & fileName, string & outSolution, std
     // read data.
     CSVReader reader(fileName);
     vector<vector<double>> cost_matrix = reader.getDoubleData();
+    cout << fileName << endl;
     vector<vector<int>> scale_cost_matrix;
     const double scale = 1000.0;
     scale_cost_matrix.resize(swp ? cost_matrix[0].size() : cost_matrix.size());

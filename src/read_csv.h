@@ -27,7 +27,7 @@ public:
     
     std::vector<std::vector<double> > getDoubleFromStringData(int from_row = 0, int to_row = 1000000);
     
-    std::vector<std::vector<double> > getDoubleData(int from_row = 0, int to_row = 1000000);
+    std::vector<std::vector<double> > getDoubleData(int from_row = 0, int to_row = 10000);
 };
 
 #endif
