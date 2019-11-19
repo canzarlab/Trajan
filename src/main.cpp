@@ -155,8 +155,9 @@ int main(int argc, char** argv)
             u[1] = t2Node2Label[u[1]];
         }
         
-        string redundantT1 = "redundant"+outScoreFile+argv[5]+"doNotDeleteT1.ooo";
-        string redundantT2 = "redundant"+outScoreFile+argv[5]+"doNotDeleteT2.ooo";
+        srand (time(NULL));
+        string redundantT1 = "redundant" + to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT1.ooo";
+        string redundantT2 = "redundant"+ to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT2.ooo";
         ofstream t1NewTree(redundantT1);
         for (auto & u: t1_tree){
             for (auto & v: u){
