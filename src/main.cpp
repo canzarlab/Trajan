@@ -155,7 +155,9 @@ int main(int argc, char** argv)
             u[1] = t2Node2Label[u[1]];
         }
         
-        ofstream t1NewTree("doNotDeleteT1.ooo");
+        string redundantT1 = "redundant"+outScoreFile+argv[5]+"doNotDeleteT1.ooo";
+        string redundantT2 = "redundant"+outScoreFile+argv[5]+"doNotDeleteT2.ooo";
+        ofstream t1NewTree(redundantT1);
         for (auto & u: t1_tree){
             for (auto & v: u){
                 t1NewTree << v << " ";
@@ -164,7 +166,7 @@ int main(int argc, char** argv)
         }
         t1NewTree.close();
         
-        ofstream t2NewTree("doNotDeleteT2.ooo");
+        ofstream t2NewTree(redundantT2);
         for (auto & u: t2_tree){
             for (auto & v: u){
                 t2NewTree << v << " ";
@@ -173,12 +175,15 @@ int main(int argc, char** argv)
         }
         t2NewTree.close();
         
-        argv[1] = const_cast<char*>("doNotDeleteT1.ooo");
-        argv[3] = const_cast<char*>("doNotDeleteT2.ooo");
+        // argv[1] = const_cast<char*>(redundantT1);
+        // argv[3] = const_cast<char*>(redundantT2);
+        cout << redundantT1 << ", " << redundantT2 << endl;
+        argv[1] = const_cast<char*>(redundantT1.c_str());
+        argv[3] = const_cast<char*>(redundantT2.c_str());
         tie(t1, t2) = MakeGraphs(argc, argv);
         // remove files 
-        remove("doNotDeleteT1.ooo");
-        remove("doNotDeleteT2.ooo");
+        // remove(redundantT1);
+        // remove(redundantT2);
         Solver* solver = MakeSolver(*t1, *t2, argc, argv, t1Label2Node, t2Label2Node);
         if (solver) solver->Solve(argv[3 + (argc == 9) + 2 * (argc == 12)]);
         delete solver;
