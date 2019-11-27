@@ -423,5 +423,13 @@ int main(int argc, char** argv)
             assert(maxmatrix(i, j) >= 0);
 
     // first node in topological ordering is the root
-    cout << forest_forest(t1, t2, maxmatrix, 1, 1);
+    double weight = forest_forest(t1, t2, maxmatrix, 1, 1);
+
+    // convert to minimization score
+    weight = -weight;
+    for (int i = 0; i < t1.n; ++i)
+        weight += minmatrix(i, t2.n);
+    for (int i = 0; i < t2.n; ++i)
+        weight += minmatrix(t1.n, i);
+    cout << weight / scale << endl;
 }
