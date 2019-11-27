@@ -38,7 +38,6 @@ const int MAXN = 500;
 const int MAXLB = 64;
 
 dp_table fdp;
-int dp[MAXN][MAXN];
 
 // should be faster than vector<vector<int>>
 struct array2d
@@ -198,14 +197,14 @@ struct tree
 };
 
 // TODO: This special case is UNUSED for now
-int path_tree(const tree& t1, const tree& t2, const int lx, int x, int y)
+int path_tree(array2d& dp, const tree& t1, const tree& t2, const int lx, int x, int y)
 {
     // trivial case: empty tree
     if (x == lx)
         return 0;
 
     // memoization
-    int& sol = dp[x][y];
+    int& sol = dp(x, y);
     if (sol != -1)
         return sol;
 
@@ -214,35 +213,35 @@ int path_tree(const tree& t1, const tree& t2, const int lx, int x, int y)
     int w = t1.adj[x].front();
 
     // delete path node
-    sol = max(sol, path_tree(t1, t2, lx, w, y));
+    sol = max(sol, path_tree(dp, t1, t2, lx, w, y));
     for (int z : t2.adj[y])
     {
         // match x and y
-        sol = max(sol, 1 + path_tree(t1, t2, lx, w, z));
+        sol = max(sol, 1 + path_tree(dp, t1, t2, lx, w, z));
         // delete tree node
-        sol = max(sol, path_tree(t1, t2, lx, x, z));
+        sol = max(sol, path_tree(dp, t1, t2, lx, x, z));
     }
     return sol;
 }
 
 // lx/ly are parents of roots of paths in t1 and t2 respectively
-int path_path(const tree& t1, const tree& t2, const int lx, const int ly, int x, int y)
+int path_path(array2d& dp, const tree& t1, const tree& t2, const int lx, const int ly, int x, int y)
 {
     // trivial case: empty tree
     if (x == lx || y == ly)
         return 0;
 
     // memoization
-    int& sol = dp[x][y];
+    int& sol = dp(x, y);
     if (sol != -1)
         return sol;
 
     // delete t1 node
-    sol = max(sol, path_path(t1, t2, lx, ly, t1.par[x], y));
+    sol = max(sol, path_path(dp, t1, t2, lx, ly, t1.par[x], y));
     // match x and y
-    sol = max(sol, 1 + path_path(t1, t2, lx, ly, t1.par[x], t2.par[y]));
+    sol = max(sol, 1 + path_path(dp, t1, t2, lx, ly, t1.par[x], t2.par[y]));
     // delete t2 node
-    sol = max(sol, path_path(t1, t2, lx, ly, x, t2.par[y]));
+    sol = max(sol, path_path(dp, t1, t2, lx, ly, x, t2.par[y]));
     return sol;
 }
 
@@ -254,9 +253,31 @@ int find_root(const tree& t, const mask m, int x)
     return x;
 }
 
-// rx/ry are (branching) roots of forests
+// generic bipartite matching dp: D is weight matrix, k index on left side, m mask of right side
+int bipartite(array2d& D, array2d& dp, int k, mask m)
+{
+    // nothing left to match
+    if (k == D.n || m == 0)
+        return 0;
+
+    // memoization
+    int& sol = dp(k, m);
+    if (sol != -1)
+        return sol;
+
+    // try to match kth tree in t1 with any avaliable tree in t1
+    for (mask mi = m; mi != 0; mi -= ls(mi))
+        sol = max(sol, D(k, tz(mi)) + bipartite(D, dp, k + 1, m ^ ls(mi)));
+    return sol;
+};
+
+// rx/ry are leaf/branching roots of forests
 int forest_forest(const tree& t1, const tree& t2, mask rx, mask ry)
 {
+    // trivial case: empty forest
+    if (rx == 0 || ry == 0)
+        return 0;
+
     // memoization
     auto it = fdp[rx].find(ry);
     if (it != fdp[rx].end())
@@ -320,6 +341,13 @@ int forest_forest(const tree& t1, const tree& t2, mask rx, mask ry)
         {
             // branching node index
             int u = va[i], v = vb[j];
+            // path  x..z in t1
+            int z = t1.b[u];
+            int x = find_root(t1, rx, z);
+            // path y..w in t2
+            int w = t2.b[v];
+            int y = find_root(t2, ry, w);
+
             // corresponding distance table entry
             int& uvs = D(i, j);
             // select a branch at u
@@ -329,18 +357,10 @@ int forest_forest(const tree& t1, const tree& t2, mask rx, mask ry)
             for (mask s = t2.ch[v]; s != 0; s -= ls(s))
                 uvs = max(uvs, forest_forest(t1, t2, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v])));
 
-            // path  x..z in t1
-            int z = t1.b[u];
-            int x = find_root(t1, rx, z);
-
-            // path y..w in t2
-            int w = t2.b[v];
-            int y = find_root(t2, ry, w);
-
             // initialize dp table for path to path matching
-            memset(dp, -1, sizeof dp);
+            array2d dp(t1.n, t2.n);
             // match the paths
-            uvs = max(uvs, forest_forest(t1, t2, t1.ch[u], t2.ch[v]) + path_path(t1, t2, x, y, z, w));
+            uvs = max(uvs, forest_forest(t1, t2, t1.ch[u], t2.ch[v]) + path_path(dp, t1, t2, x, y, z, w));
         }
     }
 
@@ -348,23 +368,7 @@ int forest_forest(const tree& t1, const tree& t2, mask rx, mask ry)
     array2d bdp(va.size(), 1 << vb.size());
 
     // compute optimal forest-to-forest bipartite matching
-    function<int(int, int)> bipartite = [&] (int k, int m)
-    {
-        // nothing left to match
-        if (k == va.size() || m == 0)
-            return 0;
-
-        // memoization
-        int& sol = bdp(k, m);
-        if (sol != -1)
-            return sol;
-
-        // try to match kth tree in t1 with any avaliable tree in t1
-        for (int mi = m; mi != 0; mi -= ls(mi))
-            sol = max(sol, D(k, tz(mi)) + bipartite(k + 1, m ^ ls(mi)));
-        return sol;
-    };
-    sol = max(sol, bipartite(0, fm(vb.size())));
+    sol = max(sol, bipartite(D, bdp, 0, fm(vb.size())));
     return sol;
 }
 
