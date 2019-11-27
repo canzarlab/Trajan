@@ -51,7 +51,7 @@ struct array2d
 
     array2d(int n, int m) : n(n), m(m)
     {
-        v.resize(n * m, -1);
+        v.resize(n * m, -1e9);
     }
 
     int& operator()(int x, int y)
@@ -210,7 +210,7 @@ int path_tree(array2d& dp, const tree& t1, const tree& t2, const int lx, int x, 
 
     // memoization
     int& sol = dp(x, y);
-    if (sol != -1)
+    if (sol != -1e9)
         return sol;
 
     // TODO: select the correct child
@@ -238,7 +238,7 @@ int path_path(array2d& dp, const array2d& matrix, const tree& t1, const tree& t2
 
     // memoization
     int& sol = dp(x, y);
-    if (sol != -1)
+    if (sol != -1e9)
         return sol;
 
     // delete t1 node
@@ -267,7 +267,7 @@ int bipartite(array2d& D, array2d& dp, int k, mask m)
 
     // memoization
     int& sol = dp(k, m);
-    if (sol != -1)
+    if (sol != -1e9)
         return sol;
 
     // try to match kth tree in t1 with any avaliable tree in t1
@@ -402,25 +402,22 @@ int main(int argc, char** argv)
     }
     tree t1(argv[1], argv[2]);
     tree t2(argv[3], argv[4]);
-
     vector<vector<double>> cost_matrix = CSVReader(argv[5]).getDoubleData();
+
     // last row/column is deletion cost
     array2d minmatrix(t1.n + 1, t2.n + 1);
+
+    // convert scores to integers
     const double scale = 1000.0;
     for (int i = 0; i < t1.n + 1; ++i)
         for (int j = 0; j < t2.n + 1; ++j)
-            minmatrix(i, j) = round(scale * cost_matrix[i][j]);
+            minmatrix(i, j) = scale * cost_matrix[i][j];
 
     // convert into maximization problem
     array2d maxmatrix(t1.n, t2.n);
     for (int i = 0; i < t1.n; ++i)
         for (int j = 0; j < t2.n; ++j)
             maxmatrix(i, j) = minmatrix(i, t2.n) + minmatrix(t1.n, j) - minmatrix(i, j);
-
-    // sanity check: matching can't be worse than not matching
-    for (int i = 0; i < t1.n; ++i)
-        for (int j = 0; j < t2.n; ++j)
-            assert(maxmatrix(i, j) >= 0);
 
     // first node in topological ordering is the root
     double weight = forest_forest(t1, t2, maxmatrix, 1, 1);
@@ -431,5 +428,6 @@ int main(int argc, char** argv)
         weight += minmatrix(i, t2.n);
     for (int i = 0; i < t2.n; ++i)
         weight += minmatrix(t1.n, i);
+    // scale back the score
     cout << weight / scale << endl;
 }
