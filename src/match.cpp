@@ -17,8 +17,10 @@
 #include <algorithm>
 #include <fstream>
 #include <cassert>
+#include <cmath>
 #include "read_csv.h"
 #define die() assert(false)
+#define dbg(x) cerr << #x << " = " << x << endl
 using namespace std;
 
 using uint = unsigned;
@@ -96,6 +98,7 @@ struct tree
         int node_idx; string node_name;
         while (mapfile >> node_idx >> node_name)
             m[node_name] = node_idx;
+        n = m.size();
 
         // nroot[x] == 1 means x is not the root
         vector<int> nroot(MAXN);
@@ -215,13 +218,13 @@ int path_tree(array2d& dp, const tree& t1, const tree& t2, const int lx, int x, 
     int w = t1.adj[x].front();
 
     // delete path node
-    sol = min(sol, path_tree(dp, t1, t2, lx, w, y));
+    sol = max(sol, path_tree(dp, t1, t2, lx, w, y));
     for (int z : t2.adj[y])
     {
         // match x and y
-        sol = min(sol, 1 + path_tree(dp, t1, t2, lx, w, z));
+        sol = max(sol, 1 + path_tree(dp, t1, t2, lx, w, z));
         // delete tree node
-        sol = min(sol, path_tree(dp, t1, t2, lx, x, z));
+        sol = max(sol, path_tree(dp, t1, t2, lx, x, z));
     }
     return sol;
 }
@@ -239,25 +242,19 @@ int path_path(array2d& dp, const array2d& matrix, const tree& t1, const tree& t2
         return sol;
 
     // delete t1 node
-    sol = min(sol, matrix(x, t2.n) + path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], y));
+    sol = max(sol, path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], y));
     // match x and y
-    sol = min(sol, matrix(x, y) + path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], t2.par[y]));
+    sol = max(sol, matrix(x, y) + path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], t2.par[y]));
     // delete t2 node
-    sol = min(sol, matrix(t1.n, y) + path_path(dp, matrix, t1, t2, lx, ly, x, t2.par[y]));
+    sol = max(sol, path_path(dp, matrix, t1, t2, lx, ly, x, t2.par[y]));
     return sol;
 }
 
 // TODO: precompute these
-int find_root(const tree& t, const array2d& matrix, const mask m, int& cost, bool t1, int x)
+int find_root(const tree& t, const mask m, int x)
 {
     while (x != -1 && (t.rb[x] == -1 || (m & in(t.rb[x]))))
-    {
-        if (t1)
-            cost += matrix(x, matrix.m);
-        else
-            cost += matrix(matrix.n, x);
         x = t.par[x];
-    }
     return x;
 }
 
@@ -275,7 +272,7 @@ int bipartite(array2d& D, array2d& dp, int k, mask m)
 
     // try to match kth tree in t1 with any avaliable tree in t1
     for (mask mi = m; mi != 0; mi -= ls(mi))
-        sol = min(sol, D(k, tz(mi)) + bipartite(D, dp, k + 1, m ^ ls(mi)));
+        sol = max(sol, D(k, tz(mi)) + bipartite(D, dp, k + 1, m ^ ls(mi)));
     return sol;
 }
 
@@ -316,12 +313,9 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
         // for bipartite matching consider only nodes which are leaf/branching in current subforest
         va.push_back(u);
 
-        // cost of removing this path
-        int cost = 0;
-
         // path  x..z in t1
         int z = t1.b[u];
-        int x = find_root(t1, matrix, rx, cost, true, z);
+        int x = find_root(t1, rx, z);
         ra.push_back(x);
 
         // don't remove leaves
@@ -330,7 +324,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // exclude u, include its branching children, exclude its branching ancestors
         mask m = em(rx ^ ls(mp) ^ t1.ch[u], t1.ba[u]);
-        sol = min(sol, cost + forest_forest(t1, t2, matrix, m, ry));
+        sol = max(sol, forest_forest(t1, t2, matrix, m, ry));
     }
 
     // remove a path in t2
@@ -345,12 +339,9 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
         // for bipartite matching consider only nodes which are leaf/branching in current subforest
         vb.push_back(v);
 
-        // cost of removing this path
-        int cost = 0;
-
         // path y..w in t2
         int w = t2.b[v];
-        int y = find_root(t2, matrix, ry, cost, false, w);
+        int y = find_root(t2, ry, w);
         rb.push_back(y);
 
         // don't remove leaves
@@ -359,7 +350,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // exclude v, include its branching children, exclude its branching ancestors
         mask m = em(ry ^ ls(mq) ^ t2.ch[v], t2.ba[v]);
-        sol = min(sol, cost + forest_forest(t1, t2, matrix, rx, m));
+        sol = max(sol, forest_forest(t1, t2, matrix, rx, m));
     }
 
     // tree to tree distance table
@@ -383,15 +374,15 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             int& uvs = D(i, j);
             // select a branch at u
             for (mask s = t1.ch[u]; s != 0; s -= ls(s))
-                uvs = min(uvs, forest_forest(t1, t2, matrix, in(u) | ls(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v])));
+                uvs = max(uvs, forest_forest(t1, t2, matrix, in(u) | ls(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v])));
             // select a branch at v
             for (mask s = t2.ch[v]; s != 0; s -= ls(s))
-                uvs = min(uvs, forest_forest(t1, t2, matrix, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v])));
+                uvs = max(uvs, forest_forest(t1, t2, matrix, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v])));
 
             // initialize dp table for path to path matching
             array2d dp(t1.n, t2.n);
             // match the paths
-            uvs = min(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, matrix, t1, t2, x, y, z, w));
+            uvs = max(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, matrix, t1, t2, x, y, z, w));
         }
     }
 
@@ -399,8 +390,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     array2d bdp(va.size(), 1 << vb.size());
 
     // compute optimal forest-to-forest bipartite matching
-    sol = min(sol, bipartite(D, bdp, 0, fm(vb.size())));
-    return sol;
+    return sol = max(sol, bipartite(D, bdp, 0, fm(vb.size())));
 }
 
 int main(int argc, char** argv)
@@ -415,12 +405,23 @@ int main(int argc, char** argv)
 
     vector<vector<double>> cost_matrix = CSVReader(argv[5]).getDoubleData();
     // last row/column is deletion cost
-    array2d matrix(t1.n + 1, t2.n + 1);
+    array2d minmatrix(t1.n + 1, t2.n + 1);
     const double scale = 1000.0;
     for (int i = 0; i < t1.n + 1; ++i)
         for (int j = 0; j < t2.n + 1; ++j)
-            matrix(i, j) = scale * cost_matrix[i][j];
+            minmatrix(i, j) = round(scale * cost_matrix[i][j]);
+
+    // convert into maximization problem
+    array2d maxmatrix(t1.n, t2.n);
+    for (int i = 0; i < t1.n; ++i)
+        for (int j = 0; j < t2.n; ++j)
+            maxmatrix(i, j) = minmatrix(i, t2.n) + minmatrix(t1.n, j) - minmatrix(i, j);
+
+    // sanity check: matching can't be worse than not matching
+    for (int i = 0; i < t1.n; ++i)
+        for (int j = 0; j < t2.n; ++j)
+            assert(maxmatrix(i, j) >= 0);
 
     // first node in topological ordering is the root
-    cout << forest_forest(t1, t2, matrix, 1, 1);
+    cout << forest_forest(t1, t2, maxmatrix, 1, 1);
 }
