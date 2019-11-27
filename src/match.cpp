@@ -50,6 +50,10 @@ struct array2d
     int n, m;
     vector<int> v;
 
+    array2d() : n(0), m(0)
+    {
+    }
+
     array2d(int n, int m) : n(n), m(m)
     {
         v.resize(n * m, -1e9);
@@ -65,6 +69,9 @@ struct array2d
         return v[x * m + y];
     }
 };
+
+using path_dp_table = map<tuple<int, int, int, int>, array2d>;
+path_dp_table pdp;
 
 struct tree
 {
@@ -383,8 +390,12 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             for (mask s = t2.ch[v]; s != 0; s -= ls(s))
                 uvs = max(uvs, forest_forest(t1, t2, matrix, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v])));
 
-            // initialize dp table for path to path matching
-            array2d dp(t1.n, t2.n);
+            // initialize or fetch path-to-path matching dp table
+            auto it = pdp.find({x, y, z, w});
+            if (it == pdp.end())
+                pdp[{x, y, z, w}] = array2d(t1.n, t2.n);
+
+            array2d& dp = pdp[{x, y, z, w}];
             // match the paths
             uvs = max(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, matrix, t1, t2, x, y, z, w));
         }
