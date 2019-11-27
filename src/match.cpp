@@ -41,6 +41,7 @@ const int MAXN = 500;
 // maximum number of leaf/branching nodes in a tree
 const int MAXLB = 64;
 
+// forest-to-forest dp table
 dp_table fdp;
 
 // should be faster than vector<vector<int>>
@@ -270,6 +271,9 @@ int bipartite(array2d& D, array2d& dp, int k, mask m)
     if (sol != -1e9)
         return sol;
 
+    // don't match kth tree with anyone
+    sol = bipartite(D, dp, k + 1, m);
+
     // try to match kth tree in t1 with any avaliable tree in t1
     for (mask mi = m; mi != 0; mi -= ls(mi))
         sol = max(sol, D(k, tz(mi)) + bipartite(D, dp, k + 1, m ^ ls(mi)));
@@ -288,7 +292,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     if (it != fdp[rx].end())
         return it->second;
 
-    int& sol = fdp[rx][ry];
+    int& sol = fdp[rx][ry] = -1e9;
 
     // (branching) roots of trees in t1 and t2 respectively
     vector<int> va, vb;
