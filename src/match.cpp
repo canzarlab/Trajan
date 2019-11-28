@@ -78,12 +78,12 @@ struct array2d
 };
 
 // TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
-using dp_table = unordered_map<mask, unordered_map<mask, pair<int, vector<int>>>>;
+using dp_table = unordered_map<mask, unordered_map<mask, tuple<int, int, int, vector<int>>>>;
 using path_dp_table = map<tuple<int, int, int, int>, pair<array2d, array2d>>;
 dp_table fdp; // forest-to-forest dp table
 path_dp_table pdp; // path-to-path dp table
 
-// path-path dp transitions
+// dp transitions
 enum : int
 {
     DEL_1,
@@ -351,9 +351,10 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     // memoization
     auto it = fdp[rx].find(ry);
     if (it != fdp[rx].end())
-        return it->second.first;
+        return get<0>(it->second);
 
-    auto& [sol, bdp] = fdp[rx][ry];
+    // score, transition type, transition destination, bipartite matching
+    auto& [sol, trs, dst, bdp] = fdp[rx][ry];
     sol = NINF;
 
     // (branching) roots of trees in t1 and t2 respectively
@@ -390,7 +391,9 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // exclude u, include its branching children, exclude its branching ancestors
         mask m = em(rx ^ ls(mp) ^ t1.ch[u], t1.ba[u]);
-        sol = max(sol, forest_forest(t1, t2, matrix, m, ry));
+        int nsol = forest_forest(t1, t2, matrix, m, ry);
+        if (nsol > sol)
+            sol = nsol, trs = DEL_1, dst = u;
     }
 
     // remove a path in t2
@@ -416,7 +419,9 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // exclude v, include its branching children, exclude its branching ancestors
         mask m = em(ry ^ ls(mq) ^ t2.ch[v], t2.ba[v]);
-        sol = max(sol, forest_forest(t1, t2, matrix, rx, m));
+        int nsol = forest_forest(t1, t2, matrix, rx, m);
+        if (nsol > sol)
+            sol = nsol, trs = DEL_2, dst = v;
     }
 
     // tree to tree distance table
@@ -456,7 +461,10 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
         }
     }
     // compute optimal forest-to-forest bipartite matching
-    return sol = max(sol, bipartite_aux(D, bdp));
+    int nsol = bipartite_aux(D, bdp);
+    if (nsol > sol)
+        sol = nsol, trs = MATCH, dst = -1;
+    return sol;
 }
 
 int main(int argc, char** argv)
