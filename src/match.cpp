@@ -600,8 +600,8 @@ bool valid(pair<int, int> a, pair<int, int> b, array2d& D1, array2d& D2)
 bool verify(const tree& t1, const tree& t2, vector<pair<int, int>>& matching)
 {
     array2d D1(t1.n, t1.n, 0), D2(t2.n, t2.n, 0);
-    make_trans(t1, 1, D1);
-    make_trans(t2, 1, D2);
+    make_trans(t1, t1.r, D1);
+    make_trans(t2, t2.r, D2);
     for (int i = 0; i < matching.size(); ++i)
         for (int j = i + 1; j < matching.size(); ++j)
             if (!valid(matching[i], matching[j], D1, D2))
