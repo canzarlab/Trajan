@@ -79,9 +79,17 @@ struct array2d
 
 // TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
 using dp_table = unordered_map<mask, unordered_map<mask, pair<int, vector<int>>>>;
-using path_dp_table = map<tuple<int, int, int, int>, array2d>;
+using path_dp_table = map<tuple<int, int, int, int>, pair<array2d, array2d>>;
 dp_table fdp; // forest-to-forest dp table
 path_dp_table pdp; // path-to-path dp table
+
+// path-path dp transitions
+enum : int
+{
+    DEL_1,
+    MATCH,
+    DEL_2
+};
 
 struct tree
 {
@@ -248,7 +256,7 @@ int path_tree(array2d& dp, const tree& t1, const tree& t2, const int lx, int x, 
 }
 
 // lx/ly are parents of roots of paths in t1 and t2 respectively
-int path_path(array2d& dp, const array2d& matrix, const tree& t1, const tree& t2, const int lx, const int ly, int x, int y)
+int path_path(array2d& dp, array2d& pdp, const array2d& matrix, const tree& t1, const tree& t2, const int lx, const int ly, int x, int y)
 {
     // trivial case: empty path
     if (x == lx || y == ly)
@@ -260,11 +268,20 @@ int path_path(array2d& dp, const array2d& matrix, const tree& t1, const tree& t2
         return sol;
 
     // delete t1 node
-    sol = max(sol, path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], y));
+    int nsol = path_path(dp, pdp, matrix, t1, t2, lx, ly, t1.par[x], y);
+    if (nsol > sol)
+        sol = nsol, pdp(x, y) = DEL_1;
+
     // match x and y
-    sol = max(sol, matrix(x, y) + path_path(dp, matrix, t1, t2, lx, ly, t1.par[x], t2.par[y]));
+    nsol = matrix(x, y) + path_path(dp, pdp, matrix, t1, t2, lx, ly, t1.par[x], t2.par[y]);
+    if (nsol > sol)
+        sol = nsol, pdp(x, y) = MATCH;
+
     // delete t2 node
-    sol = max(sol, path_path(dp, matrix, t1, t2, lx, ly, x, t2.par[y]));
+    nsol = path_path(dp, pdp, matrix, t1, t2, lx, ly, x, t2.par[y]);
+    if (nsol > sol)
+        sol = nsol, pdp(x, y) = DEL_2;
+
     return sol;
 }
 
@@ -431,11 +448,11 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             // initialize or fetch path-to-path matching dp table
             auto it = pdp.find({x, y, z, w});
             if (it == pdp.end())
-                pdp[{x, y, z, w}] = array2d(t1.n, t2.n);
+                pdp[{x, y, z, w}] = {array2d(t1.n, t2.n), array2d(t1.n, t2.n)};
 
-            array2d& dp = pdp[{x, y, z, w}];
+            auto& [dp, tdp] = pdp[{x, y, z, w}];
             // match the paths
-            uvs = max(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, matrix, t1, t2, x, y, z, w));
+            uvs = max(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, tdp, matrix, t1, t2, x, y, z, w));
         }
     }
     // compute optimal forest-to-forest bipartite matching
