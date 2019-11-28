@@ -78,7 +78,7 @@ struct array2d
 };
 
 // TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
-using ff_state = tuple<int, int, int, vector<int>, vector<int>, vector<int>, vector<int>, vector<int>, array2d>;
+using ff_state = tuple<int, int, int, vector<int>, vector<int>, vector<int>, vector<int>, vector<int>, array2d, array2d>;
 using dp_table = unordered_map<mask, unordered_map<mask, ff_state>>;
 using path_dp_table = map<tuple<int, int, int, int>, pair<array2d, array2d>>;
 dp_table fdp; // forest-to-forest dp table
@@ -314,7 +314,7 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
         return sol;
 
     // don't match kth tree with anyone
-    sol = bipartite(D, dp, pdp, k + 1, m), pdp(k, m) = 0;
+    sol = bipartite(D, dp, pdp, k + 1, m), pdp(k, m) = -1;
 
     // try to match kth tree in t1 with any avaliable tree in t2
     for (mask mi = m; mi != 0; mi -= ls(mi))
@@ -329,8 +329,8 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
 int bipartite_aux(array2d& D, vector<int>& sol)
 {
     // complexity of bipartite is O(n2^m) so make sure m < n
-    if (D.n < D.m)
-        D = D.transpose();
+    // if (D.n < D.m)
+    //     D = D.transpose();
 
     // dp table for the matching
     array2d bdp(D.n, 1 << D.m), pdp(D.n, 1 << D.m);
@@ -340,11 +340,12 @@ int bipartite_aux(array2d& D, vector<int>& sol)
 
     // store the matching
     sol.resize(D.n);
-    int m = fm(D.m);
-    for (int k = 0; k < D.n; ++k)
+    mask m = fm(D.m);
+    for (int k = 0; k < D.n && m > 0; ++k)
     {
-        sol[k] = pdp(k, m) - 1;
-        m ^= in(pdp(k, m));
+        sol[k] = pdp(k, m);
+        if (pdp(k, m) >= 0)
+            m ^= in(pdp(k, m));
     }
     // TODO: transpose back the matching
     return weight;
@@ -366,7 +367,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     // (branching) roots of trees in t1 and t2 respectively
     // roots of paths in va and vb respectively
     // bipartite matching transition table
-    auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr] = fdp[rx][ry];
+    auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr, bst] = fdp[rx][ry];
 
     // initialize score to negative infinity
     sol = NINF;
@@ -436,8 +437,9 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     // tree to tree distance table
     array2d D(va.size(), vb.size());
 
-    // initialize tree to tree transition table
+    // initialize tree to tree transition tables
     btr = array2d(va.size(), vb.size());
+    bst = array2d(va.size(), vb.size());
 
     // compute tree-to-tree distances
     for (uint i = 0; i < va.size(); ++i)
@@ -460,7 +462,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             {
                 int nuvs = forest_forest(t1, t2, matrix, in(u) | ls(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
                 if (nuvs > uvs)
-                    uvs = nuvs, btr(i, j) = DEL_1;
+                    uvs = nuvs, btr(i, j) = DEL_1, bst(i, j) = tz(s);
             }
 
             // select a branch at v
@@ -468,7 +470,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             {
                 int nuvs = forest_forest(t1, t2, matrix, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v]));
                 if (nuvs > uvs)
-                    uvs = nuvs, btr(i, j) = DEL_2;
+                    uvs = nuvs, btr(i, j) = DEL_2, bst(i, j) = tz(s);
             }
 
             // initialize or fetch path-to-path matching dp table
@@ -521,7 +523,8 @@ void print_matching(const tree& t1, const tree& t2, mask rx, mask ry)
     // (branching) roots of trees in t1 and t2 respectively
     // roots of paths in va and vb respectively
     // bipartite matching transition table
-    const auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr] = fdp[rx][ry];
+    // branch choice table
+    const auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr, bst] = fdp[rx][ry];
 
     switch (trs)
     {
@@ -548,14 +551,16 @@ void print_matching(const tree& t1, const tree& t2, mask rx, mask ry)
                 // path y..w in t2
                 int w = t2.b[v];
                 int y = rb[j];
+                // branch choice
+                int s = bst(i, j);
 
                 switch (btr(i, j))
                 {
                     case DEL_1:
-                        //print_matching(t1, t2, in(u) | ls(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
+                        print_matching(t1, t2, in(u) | in(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
                         break;
                     case DEL_2:
-                        //print_matching(t1, t2, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v]));
+                        print_matching(t1, t2, in(u) | (rx & t1.ba[u]), in(v) | in(s) | (ry & t2.ba[v]));
                         break;
                     case MATCH:
                         auto& [dp, tdp] = pdp[{x, y, z, w}];
