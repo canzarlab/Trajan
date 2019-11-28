@@ -275,6 +275,9 @@ int path_path(array2d& dp, array2d& pdp, const array2d& matrix, const tree& t1, 
     if (sol != NINF)
         return sol;
 
+    // initialize score to negative infinity
+    sol = NINF;
+
     // delete t1 node
     int nsol = path_path(dp, pdp, matrix, t1, t2, lx, ly, t1.par[x], y);
     if (nsol > sol)
@@ -293,9 +296,10 @@ int path_path(array2d& dp, array2d& pdp, const array2d& matrix, const tree& t1, 
     return sol;
 }
 
-// TODO: precompute these
+// find the root of the tree containing node x in the forest m
 int find_root(const tree& t, const mask m, int x)
 {
+    // go up if x isn't a branching node or is a branching node included in the forest m
     while (x != -1 && (t.rb[x] == -1 || (m & in(t.rb[x]))))
         x = t.par[x];
     return x;
@@ -314,7 +318,7 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
         return sol;
 
     // don't match kth tree with anyone
-    sol = bipartite(D, dp, pdp, k + 1, m), pdp(k, m) = -1;
+    sol = bipartite(D, dp, pdp, k + 1, m);
 
     // try to match kth tree in t1 with any avaliable tree in t2
     for (mask mi = m; mi != 0; mi -= ls(mi))
@@ -326,6 +330,7 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
     return sol;
 }
 
+// forest-to-forest bipartite matching
 int bipartite_aux(array2d& D, vector<int>& sol)
 {
     // complexity of bipartite is O(n2^m) so make sure m < n
@@ -333,18 +338,19 @@ int bipartite_aux(array2d& D, vector<int>& sol)
     //     D = D.transpose();
 
     // dp table for the matching
-    array2d bdp(D.n, 1 << D.m), pdp(D.n, 1 << D.m);
+    array2d bdp(D.n, 1 << D.m), pdp(D.n, 1 << D.m, -1);
 
     // compute the matching
     int weight = bipartite(D, bdp, pdp, 0, fm(D.m));
 
     // store the matching
-    sol.resize(D.n);
+    // note: -1 is unmatched
+    sol.resize(D.n, -1);
     mask m = fm(D.m);
     for (int k = 0; k < D.n && m > 0; ++k)
     {
         sol[k] = pdp(k, m);
-        if (pdp(k, m) >= 0)
+        if (pdp(k, m) != -1)
             m ^= in(pdp(k, m));
     }
     // TODO: transpose back the matching
@@ -367,6 +373,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     // (branching) roots of trees in t1 and t2 respectively
     // roots of paths in va and vb respectively
     // bipartite matching transition table
+    // branch choice table
     auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr, bst] = fdp[rx][ry];
 
     // initialize score to negative infinity
@@ -448,7 +455,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
         {
             // branching node index
             int u = va[i], v = vb[j];
-            // path  x..z in t1
+            // path x..z in t1
             int z = t1.b[u];
             int x = ra[i];
             // path y..w in t2
@@ -460,6 +467,8 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             // select a branch at u
             for (mask s = t1.ch[u]; s != 0; s -= ls(s))
             {
+                // on t1 side: include u, chosen branch s and keep branching ancestors of u
+                // on t2 side: include v and keep branching ancestors of v
                 int nuvs = forest_forest(t1, t2, matrix, in(u) | ls(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
                 if (nuvs > uvs)
                     uvs = nuvs, btr(i, j) = DEL_1, bst(i, j) = tz(s);
@@ -468,6 +477,8 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             // select a branch at v
             for (mask s = t2.ch[v]; s != 0; s -= ls(s))
             {
+                // on t1 side: include u and keep branching ancestors of u
+                // on t2 side: include v, chosen branch s and keep branching ancestors of v
                 int nuvs = forest_forest(t1, t2, matrix, in(u) | (rx & t1.ba[u]), in(v) | ls(s) | (ry & t2.ba[v]));
                 if (nuvs > uvs)
                     uvs = nuvs, btr(i, j) = DEL_2, bst(i, j) = tz(s);
@@ -482,16 +493,18 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             // match the paths
             int nuvs = forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, tdp, matrix, t1, t2, x, y, z, w);
             if (nuvs > uvs)
-                uvs = nuvs, btr(i, j) = MATCH;
+                uvs = nuvs, btr(i, j) = MATCH, bst(i, j) = -1;
         }
     }
     // compute optimal forest-to-forest bipartite matching
     int nsol = bipartite_aux(D, bdp);
     if (nsol > sol)
         sol = nsol, trs = MATCH, dst = -1;
+
     return sol;
 }
 
+// recover path-to-path matching
 void recover_matching_aux(const tree& t1, const tree& t2, vector<pair<int, int>>& matching, const array2d& tdp, const int lx, const int ly, int x, int y)
 {
     if (x == lx || y == ly)
@@ -525,7 +538,6 @@ void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& ma
     // bipartite matching transition table
     // branch choice table
     const auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr, bst] = fdp[rx][ry];
-
     switch (trs)
     {
         case DEL_1:
@@ -563,7 +575,7 @@ void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& ma
                         recover_matching(t1, t2, matching, in(u) | (rx & t1.ba[u]), in(v) | in(s) | (ry & t2.ba[v]));
                         break;
                     case MATCH:
-                        auto& [dp, tdp] = pdp[{x, y, z, w}];
+                        const auto& [dp, tdp] = pdp[{x, y, z, w}];
                         recover_matching_aux(t1, t2, matching, tdp, x, y, z, w);
                         recover_matching(t1, t2, matching, t1.ch[u], t2.ch[v]);
                         break;
@@ -573,6 +585,7 @@ void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& ma
     }
 }
 
+// transitive closure auxiliary
 void trans_closure(const tree& t, int x, int r, array2d& D)
 {
     D(r, x) = 1;
@@ -580,6 +593,7 @@ void trans_closure(const tree& t, int x, int r, array2d& D)
         trans_closure(t, y, r, D);
 }
 
+// fill transitive closure table
 void make_trans(const tree& t, int x, array2d& D)
 {
     trans_closure(t, x, x, D);
@@ -587,6 +601,7 @@ void make_trans(const tree& t, int x, array2d& D)
         make_trans(t, y, D);
 }
 
+// return true iff edges a and b can simultaneously be in an arboreal matching
 bool valid(pair<int, int> a, pair<int, int> b, array2d& D1, array2d& D2)
 {
     int i = get<0>(a), j = get<0>(b);
@@ -597,11 +612,15 @@ bool valid(pair<int, int> a, pair<int, int> b, array2d& D1, array2d& D2)
     return c0 && c1 && c2;
 }
 
+// return true iff matching is valid for (t1, t2)
 bool verify(const tree& t1, const tree& t2, vector<pair<int, int>>& matching)
 {
+    // ancestry relationship tables
     array2d D1(t1.n, t1.n, 0), D2(t2.n, t2.n, 0);
     make_trans(t1, t1.r, D1);
     make_trans(t2, t2.r, D2);
+
+    // check for pairwise conflicts
     for (int i = 0; i < matching.size(); ++i)
         for (int j = i + 1; j < matching.size(); ++j)
             if (!valid(matching[i], matching[j], D1, D2))
