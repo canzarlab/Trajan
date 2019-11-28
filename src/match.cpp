@@ -25,8 +25,6 @@ using namespace std;
 
 using uint = unsigned;
 using mask = unsigned long long;
-// TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
-using dp_table = unordered_map<mask, unordered_map<mask, int>>;
 
 // bitmask operations
 inline mask pc(mask x) { return __builtin_popcountll(x); }
@@ -40,9 +38,6 @@ inline mask em(mask m, mask r) { return m & ~r; }
 const int MAXN = 500;
 // maximum number of leaf/branching nodes in a tree
 const int MAXLB = 64;
-
-// forest-to-forest dp table
-dp_table fdp;
 
 // should be faster than vector<vector<int>>
 struct array2d
@@ -68,10 +63,24 @@ struct array2d
     {
         return v[x * m + y];
     }
+
+    array2d transpose() const
+    {
+        array2d D(m, n);
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < m; ++j)
+                D(j, i) = (*this)(i, j);
+        return D;
+    }
 };
 
+// TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
+using dp_table = unordered_map<mask, unordered_map<mask, int>>;
 using path_dp_table = map<tuple<int, int, int, int>, array2d>;
-path_dp_table pdp;
+using bi_dp_table = unordered_map<mask, unordered_map<mask, vector<int>>>;
+dp_table fdp; // forest-to-forest dp table
+path_dp_table pdp; // path-to-path dp table
+bi_dp_table bdp; // bipartite matching dp table
 
 struct tree
 {
@@ -267,7 +276,7 @@ int find_root(const tree& t, const mask m, int x)
 }
 
 // generic bipartite matching dp: D is weight matrix, k index on left side, m mask of right side
-int bipartite(array2d& D, array2d& dp, int k, mask m)
+int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
 {
     // nothing left to match
     if (k == D.n || m == 0)
@@ -279,12 +288,39 @@ int bipartite(array2d& D, array2d& dp, int k, mask m)
         return sol;
 
     // don't match kth tree with anyone
-    sol = bipartite(D, dp, k + 1, m);
+    sol = bipartite(D, dp, pdp, k + 1, m), pdp(k, m) = 0;
 
-    // try to match kth tree in t1 with any avaliable tree in t1
+    // try to match kth tree in t1 with any avaliable tree in t2
     for (mask mi = m; mi != 0; mi -= ls(mi))
-        sol = max(sol, D(k, tz(mi)) + bipartite(D, dp, k + 1, m ^ ls(mi)));
+    {
+        int nsol = D(k, tz(mi)) + bipartite(D, dp, pdp, k + 1, m ^ ls(mi));
+        if (nsol > sol)
+            sol = nsol, pdp(k, m) = tz(mi);
+    }
     return sol;
+}
+
+int bipartite_aux(array2d& D, vector<int>& sol)
+{
+    // complexity of bipartite is O(n2^m) so make sure m < n
+    if (D.n < D.m)
+        D = D.transpose();
+
+    // dp table for the matching
+    array2d bdp(D.n, 1 << D.m), pdp(D.n, 1 << D.m);
+
+    // compute the matching
+    int weight = bipartite(D, bdp, pdp, 0, fm(D.m));
+
+    // store the matching
+    sol.resize(D.n);
+    int m = fm(D.m);
+    for (int k = 0; k < D.n; ++k)
+    {
+        sol[k] = pdp(k, m) - 1;
+        m ^= in(pdp(k, m));
+    }
+    return weight;
 }
 
 // rx/ry are leaf/branching roots of forests
@@ -400,12 +436,8 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             uvs = max(uvs, forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, matrix, t1, t2, x, y, z, w));
         }
     }
-
-    // dp table for bipartite matching
-    array2d bdp(va.size(), 1 << vb.size());
-
     // compute optimal forest-to-forest bipartite matching
-    return sol = max(sol, bipartite(D, bdp, 0, fm(vb.size())));
+    return sol = max(sol, bipartite_aux(D, bdp[rx][ry]));
 }
 
 int main(int argc, char** argv)
