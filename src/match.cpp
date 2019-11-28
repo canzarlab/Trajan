@@ -334,8 +334,12 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
 int bipartite_aux(array2d& D, vector<int>& sol)
 {
     // complexity of bipartite is O(n2^m) so make sure m < n
-    // if (D.n < D.m)
-    //     D = D.transpose();
+    bool transposed = false;
+    if (D.n < D.m)
+    {
+        D = D.transpose();
+        transposed = true;
+    }
 
     // dp table for the matching
     array2d bdp(D.n, 1 << D.m), pdp(D.n, 1 << D.m, -1);
@@ -353,7 +357,16 @@ int bipartite_aux(array2d& D, vector<int>& sol)
         if (pdp(k, m) != -1)
             m ^= in(pdp(k, m));
     }
-    // TODO: transpose back the matching
+
+    // transpose the matching back
+    if (transposed)
+    {
+        vector<int> zol(D.m, -1);
+        for (int i = 0; i < D.n; ++i)
+            if (sol[i] != -1)
+                zol[sol[i]] = i;
+        swap(sol, zol);
+    }
     return weight;
 }
 
@@ -448,7 +461,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     btr = array2d(va.size(), vb.size());
     bst = array2d(va.size(), vb.size());
 
-    // compute tree-to-tree distances
+    // compute tree-to-tree weights for use in bipartite matching
     for (uint i = 0; i < va.size(); ++i)
     {
         for (uint j = 0; j < vb.size(); ++j)
