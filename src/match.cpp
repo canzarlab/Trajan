@@ -15,6 +15,7 @@
 #include <functional>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <fstream>
 #include <cassert>
 #include <cmath>
@@ -25,6 +26,8 @@ using namespace std;
 
 using uint = unsigned;
 using mask = unsigned long long;
+
+const int NINF = numeric_limits<int>::min();
 
 // bitmask operations
 inline mask pc(mask x) { return __builtin_popcountll(x); }
@@ -51,7 +54,7 @@ struct array2d
 
     array2d(int n, int m) : n(n), m(m)
     {
-        v.resize(n * m, -1e9);
+        v.resize(n * m, NINF);
     }
 
     int& operator()(int x, int y)
@@ -75,12 +78,10 @@ struct array2d
 };
 
 // TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
-using dp_table = unordered_map<mask, unordered_map<mask, int>>;
+using dp_table = unordered_map<mask, unordered_map<mask, pair<int, vector<int>>>>;
 using path_dp_table = map<tuple<int, int, int, int>, array2d>;
-using bi_dp_table = unordered_map<mask, unordered_map<mask, vector<int>>>;
 dp_table fdp; // forest-to-forest dp table
 path_dp_table pdp; // path-to-path dp table
-bi_dp_table bdp; // bipartite matching dp table
 
 struct tree
 {
@@ -227,7 +228,7 @@ int path_tree(array2d& dp, const tree& t1, const tree& t2, const int lx, int x, 
 
     // memoization
     int& sol = dp(x, y);
-    if (sol != -1e9)
+    if (sol != NINF)
         return sol;
 
     // TODO: select the correct child
@@ -255,7 +256,7 @@ int path_path(array2d& dp, const array2d& matrix, const tree& t1, const tree& t2
 
     // memoization
     int& sol = dp(x, y);
-    if (sol != -1e9)
+    if (sol != NINF)
         return sol;
 
     // delete t1 node
@@ -284,7 +285,7 @@ int bipartite(const array2d& D, array2d& dp, array2d& pdp, int k, mask m)
 
     // memoization
     int& sol = dp(k, m);
-    if (sol != -1e9)
+    if (sol != NINF)
         return sol;
 
     // don't match kth tree with anyone
@@ -333,9 +334,10 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     // memoization
     auto it = fdp[rx].find(ry);
     if (it != fdp[rx].end())
-        return it->second;
+        return it->second.first;
 
-    int& sol = fdp[rx][ry] = -1e9;
+    auto& [sol, bdp] = fdp[rx][ry];
+    sol = NINF;
 
     // (branching) roots of trees in t1 and t2 respectively
     vector<int> va, vb;
@@ -437,7 +439,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
         }
     }
     // compute optimal forest-to-forest bipartite matching
-    return sol = max(sol, bipartite_aux(D, bdp[rx][ry]));
+    return sol = max(sol, bipartite_aux(D, bdp));
 }
 
 int main(int argc, char** argv)
@@ -455,7 +457,7 @@ int main(int argc, char** argv)
     array2d minmatrix(t1.n + 1, t2.n + 1);
 
     // convert scores to integers
-    const double scale = 1000.0;
+    const double scale = 1000;
     for (int i = 0; i < t1.n + 1; ++i)
         for (int j = 0; j < t2.n + 1; ++j)
             minmatrix(i, j) = scale * cost_matrix[i][j];
