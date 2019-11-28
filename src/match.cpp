@@ -80,7 +80,7 @@ struct array2d
 // TODO: replace with gp_hash_table from __gnu_pbds or some other faster hash table
 using ff_state = tuple<int, int, int, vector<int>, vector<int>, vector<int>, vector<int>, vector<int>, array2d, array2d>;
 using dp_table = unordered_map<mask, unordered_map<mask, ff_state>>;
-using path_dp_table = map<tuple<int, int, int, int>, pair<array2d, array2d>>;
+using path_dp_table = map<tuple<int, int>, pair<array2d, array2d>>;
 dp_table fdp; // forest-to-forest dp table
 path_dp_table pdp; // path-to-path dp table
 
@@ -498,10 +498,10 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
             }
 
             // initialize or fetch path-to-path matching dp table
-            auto it = pdp.find({x, y, z, w});
+            auto it = pdp.find({x, y});
             if (it == pdp.end())
-                pdp[{x, y, z, w}] = {array2d(t1.n, t2.n), array2d(t1.n, t2.n)};
-            auto& [dp, tdp] = pdp[{x, y, z, w}];
+                pdp[{x, y}] = {array2d(t1.n, t2.n), array2d(t1.n, t2.n)};
+            auto& [dp, tdp] = pdp[{x, y}];
 
             // match the paths
             int nuvs = forest_forest(t1, t2, matrix, t1.ch[u], t2.ch[v]) + path_path(dp, tdp, matrix, t1, t2, x, y, z, w);
@@ -588,7 +588,7 @@ void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& ma
                         recover_matching(t1, t2, matching, in(u) | (rx & t1.ba[u]), in(v) | in(s) | (ry & t2.ba[v]));
                         break;
                     case MATCH:
-                        const auto& [dp, tdp] = pdp[{x, y, z, w}];
+                        const auto& [dp, tdp] = pdp[{x, y}];
                         recover_matching_aux(t1, t2, matching, tdp, x, y, z, w);
                         recover_matching(t1, t2, matching, t1.ch[u], t2.ch[v]);
                         break;
