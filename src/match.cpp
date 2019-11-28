@@ -52,9 +52,9 @@ struct array2d
     {
     }
 
-    array2d(int n, int m) : n(n), m(m)
+    array2d(int n, int m, int val = NINF) : n(n), m(m)
     {
-        v.resize(n * m, NINF);
+        v.resize(n * m, val);
     }
 
     int& operator()(int x, int y)
@@ -492,7 +492,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
     return sol;
 }
 
-void print_matching_aux(const tree& t1, const tree& t2, const array2d& tdp, const int lx, const int ly, int x, int y)
+void recover_matching_aux(const tree& t1, const tree& t2, vector<pair<int, int>>& matching, const array2d& tdp, const int lx, const int ly, int x, int y)
 {
     if (x == lx || y == ly)
         return;
@@ -500,20 +500,20 @@ void print_matching_aux(const tree& t1, const tree& t2, const array2d& tdp, cons
     switch (tdp(x, y))
     {
         case DEL_1:
-            print_matching_aux(t1, t2, tdp, lx, ly, t1.par[x], y);
+            recover_matching_aux(t1, t2, matching, tdp, lx, ly, t1.par[x], y);
             break;
         case DEL_2:
-            print_matching_aux(t1, t2, tdp, lx, ly, x, t2.par[y]);
+            recover_matching_aux(t1, t2, matching, tdp, lx, ly, x, t2.par[y]);
             break;
         case MATCH:
-            cout << t1.rm[x] << ' ' << t2.rm[y] << '\n';
-            print_matching_aux(t1, t2, tdp, lx, ly, t1.par[x], t2.par[y]);
+            matching.emplace_back(x, y);
+            recover_matching_aux(t1, t2, matching, tdp, lx, ly, t1.par[x], t2.par[y]);
             break;
     }
 }
 
 // rx/ry are leaf/branching roots of forests
-void print_matching(const tree& t1, const tree& t2, mask rx, mask ry)
+void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& matching, mask rx, mask ry)
 {
     // trivial case: empty forest
     if (rx == 0 || ry == 0)
@@ -529,10 +529,10 @@ void print_matching(const tree& t1, const tree& t2, mask rx, mask ry)
     switch (trs)
     {
         case DEL_1:
-            print_matching(t1, t2, em(rx ^ in(dst) ^ t1.ch[dst], t1.ba[dst]), ry);
+            recover_matching(t1, t2, matching, em(rx ^ in(dst) ^ t1.ch[dst], t1.ba[dst]), ry);
             break;
         case DEL_2:
-            print_matching(t1, t2, rx, em(ry ^ in(dst) ^ t2.ch[dst], t2.ba[dst]));
+            recover_matching(t1, t2, matching, rx, em(ry ^ in(dst) ^ t2.ch[dst], t2.ba[dst]));
             break;
         case MATCH:
             for (int i = 0; i < bdp.size(); ++i)
@@ -557,20 +557,64 @@ void print_matching(const tree& t1, const tree& t2, mask rx, mask ry)
                 switch (btr(i, j))
                 {
                     case DEL_1:
-                        print_matching(t1, t2, in(u) | in(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
+                        recover_matching(t1, t2, matching, in(u) | in(s) | (rx & t1.ba[u]), in(v) | (ry & t2.ba[v]));
                         break;
                     case DEL_2:
-                        print_matching(t1, t2, in(u) | (rx & t1.ba[u]), in(v) | in(s) | (ry & t2.ba[v]));
+                        recover_matching(t1, t2, matching, in(u) | (rx & t1.ba[u]), in(v) | in(s) | (ry & t2.ba[v]));
                         break;
                     case MATCH:
                         auto& [dp, tdp] = pdp[{x, y, z, w}];
-                        print_matching_aux(t1, t2, tdp, x, y, z, w);
-                        print_matching(t1, t2, t1.ch[u], t2.ch[v]);
+                        recover_matching_aux(t1, t2, matching, tdp, x, y, z, w);
+                        recover_matching(t1, t2, matching, t1.ch[u], t2.ch[v]);
                         break;
                 }
             }
             break;
     }
+}
+
+void trans_closure(const tree& t, int x, int r, array2d& D)
+{
+    D(r, x) = 1;
+    for (int y : t.adj[x])
+        trans_closure(t, y, r, D);
+}
+
+void make_trans(const tree& t, int x, array2d& D)
+{
+    trans_closure(t, x, x, D);
+    for (int y : t.adj[x])
+        make_trans(t, y, D);
+}
+
+bool valid(pair<int, int> a, pair<int, int> b, array2d& D1, array2d& D2)
+{
+    int i = get<0>(a), j = get<0>(b);
+    int x = get<1>(a), y = get<1>(b);
+    bool c2 = (D1(j, i) || D1(i, j)) == (D2(x, y) || D2(y, x));
+    bool c1 = (D1(i, j) == D2(x, y)); // assuming c2 is satisfied
+    bool c0 = (i != j && x != y);
+    return c0 && c1 && c2;
+}
+
+bool verify(const tree& t1, const tree& t2, vector<pair<int, int>>& matching)
+{
+    array2d D1(t1.n, t1.n, 0), D2(t2.n, t2.n, 0);
+    make_trans(t1, 1, D1);
+    make_trans(t2, 1, D2);
+    for (int i = 0; i < matching.size(); ++i)
+        for (int j = i + 1; j < matching.size(); ++j)
+            if (!valid(matching[i], matching[j], D1, D2))
+            {
+                auto [a, b] = matching[i];
+                auto [x, y] = matching[j];
+                dbg(t1.rm[a]);
+                dbg(t2.rm[b]);
+                dbg(t1.rm[x]);
+                dbg(t2.rm[y]);
+                return false;
+            }
+    return true;
 }
 
 int main(int argc, char** argv)
@@ -611,8 +655,16 @@ int main(int argc, char** argv)
         weight += minmatrix(t1.n, i);
 
     // scale back the score
-    cout << weight / scale << endl;
+    clog << weight / scale << endl;
 
     // recover the matching
-    print_matching(t1, t2, 1, 1);
+    vector<pair<int, int>> matching;
+    recover_matching(t1, t2, matching, 1, 1);
+
+    // verify the matching
+    assert(verify(t1, t2, matching));
+
+    // print the matching
+    for (auto [x, y] : matching)
+        cout << t1.rm[x] << ' ' << t2.rm[y] << '\n';
 }
