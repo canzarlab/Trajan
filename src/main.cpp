@@ -32,6 +32,12 @@ bool Solver::tt;
 
 void EditDist(Graph& g1, Graph& g2, string & fileName, string & outSolution, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node, string & outScore);
 
+string SplitFilename (const std::string& str)
+{
+    std::size_t found = str.find_last_of("/\\");
+    return str.substr(found+1);
+}
+
 Solver* MakeSolver(Graph& t1, Graph& t2, int argc, char** argv, std::map<string, string> & t1Label2Node, std::map<string, string> & t2Label2Node)
 {
     int s = stoi(argv[argc - 1]);
@@ -156,8 +162,11 @@ int main(int argc, char** argv)
         }
         
         srand (time(NULL));
-        string redundantT1 = "redundant" + to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT1.ooo";
-        string redundantT2 = "redundant"+ to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT2.ooo";
+        string outDist = argv[5];
+        // string redundantT1 = "redundant" + to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT1.ooo";
+        // string redundantT2 = "redundant"+ to_string(rand()) + outScoreFile+argv[5]+"doNotDeleteT2.ooo";
+        string redundantT1 = "redundant" + to_string(rand()) + SplitFilename(outScoreFile) + SplitFilename(outDist) +"doNotDeleteT1.ooo";
+        string redundantT2 = "redundant"+ to_string(rand()) +  SplitFilename(outScoreFile) + SplitFilename(outDist) +"doNotDeleteT2.ooo";
         ofstream t1NewTree(redundantT1);
         for (auto & u: t1_tree){
             for (auto & v: u){
