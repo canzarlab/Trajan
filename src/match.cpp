@@ -38,7 +38,7 @@ inline mask tz(mask x) { return __builtin_ctzll(x); }
 inline mask em(mask m, mask r) { return m & ~r; }
 
 // maximum number of nodes in a tree
-const int MAXN = 500;
+const int MAXN = 1000;
 // maximum number of leaf/branching nodes in a tree
 const int MAXLB = 64;
 
@@ -274,9 +274,6 @@ int path_path(array2d& dp, array2d& pdp, const array2d& matrix, const tree& t1, 
     int& sol = dp(x, y);
     if (sol != NINF)
         return sol;
-
-    // initialize score to negative infinity
-    sol = NINF;
 
     // delete t1 node
     int nsol = path_path(dp, pdp, matrix, t1, t2, lx, ly, t1.par[x], y);
@@ -551,6 +548,7 @@ void recover_matching(const tree& t1, const tree& t2, vector<pair<int, int>>& ma
     // bipartite matching transition table
     // branch choice table
     const auto& [sol, trs, dst, bdp, va, vb, ra, rb, btr, bst] = fdp[rx][ry];
+
     switch (trs)
     {
         case DEL_1:
@@ -635,7 +633,9 @@ bool verify(const tree& t1, const tree& t2, vector<pair<int, int>>& matching)
 
     // check for pairwise conflicts
     for (int i = 0; i < matching.size(); ++i)
+    {
         for (int j = i + 1; j < matching.size(); ++j)
+        {
             if (!valid(matching[i], matching[j], D1, D2))
             {
                 auto [a, b] = matching[i];
@@ -646,6 +646,8 @@ bool verify(const tree& t1, const tree& t2, vector<pair<int, int>>& matching)
                 dbg(t2.rm[y]);
                 return false;
             }
+        }
+    }
     return true;
 }
 
@@ -656,6 +658,7 @@ int main(int argc, char** argv)
         cout << "usage: " << argv[0] << " <tree1> <map1> <tree2> <map2> <matrix>\n";
         return 0;
     }
+    // load the data
     tree t1(argv[1], argv[2]);
     tree t2(argv[3], argv[4]);
     vector<vector<double>> cost_matrix = CSVReader(argv[5]).getDoubleData();
@@ -675,26 +678,36 @@ int main(int argc, char** argv)
         for (int j = 0; j < t2.n; ++j)
             maxmatrix(i, j) = minmatrix(i, t2.n) + minmatrix(t1.n, j) - minmatrix(i, j);
 
+    // minimization score of empty matching
+    int null_score = 0;
+    for (int i = 0; i < t1.n; ++i)
+        null_score += minmatrix(i, t2.n);
+    for (int i = 0; i < t2.n; ++i)
+        null_score += minmatrix(t1.n, i);
+
     // compute optimal tree to tree matching
     // note: first node in topological ordering is the root
-    double weight = forest_forest(t1, t2, maxmatrix, 1, 1);
-
-    // convert to minimization score
-    weight = -weight;
-    for (int i = 0; i < t1.n; ++i)
-        weight += minmatrix(i, t2.n);
-    for (int i = 0; i < t2.n; ++i)
-        weight += minmatrix(t1.n, i);
-
-    // scale back the score
-    clog << weight / scale << endl;
+    int weight = forest_forest(t1, t2, maxmatrix, 1, 1);
 
     // recover the matching
     vector<pair<int, int>> matching;
     recover_matching(t1, t2, matching, 1, 1);
 
+    // weight of recovered matching (for sanity check)
+    int mweight = 0;
+    for (auto [x, y] : matching)
+        mweight += maxmatrix(x, y);
+
+    // convert to minimization score
+    weight = null_score - weight;
+    mweight = null_score - mweight;
+
     // verify the matching
     assert(verify(t1, t2, matching));
+    assert(weight == mweight);
+
+    // scale back the score
+    clog << weight / scale << endl;
 
     // print the matching
     for (auto [x, y] : matching)
