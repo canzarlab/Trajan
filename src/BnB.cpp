@@ -21,6 +21,15 @@
 
 #define DEBUG 1
 
+// struct compare_pair{
+//     bool operator()(pair<size_t, size_t>& p, pair<size_t, size_t>& q)
+//     { 
+//         int i = K[p.first][p.second];
+//         int j = K[q.first][q.second];
+//         return c(i) > c(j); 
+//     }
+// };
+
 BnB::BnB(Graph& t1, Graph& t2, string d, double k, bool dag, double c) : LP(t1, t2, d, k, dag), G(Greedy(t1, t2, d, k, dag)), con_eps(c)
 {
 }
