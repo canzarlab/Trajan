@@ -116,6 +116,8 @@ struct tree
     int rb[MAXN];
     // branching ancestor mask
     mask ba[MAXLB];
+    // branching parent
+    int bp[MAXLB];
 
     tree(const char* filename, const char* mapname) : n(0), nb(0), r(-1)
     {
@@ -220,18 +222,22 @@ struct tree
         child(r);
 
         // identify branching ancestors
-        function<void(int, mask)> branch = [&] (int x, mask m)
+        function<void(int, mask, int)> branch = [&] (int x, mask m, int p)
         {
             // x is a branching or leaf node
             if (rb[x] != -1)
             {
+                // set branching ancestor mask
                 ba[rb[x]] = m;
                 m |= in(rb[x]);
+                // set branching parent
+                bp[rb[x]] = p;
+                p = x;
             }
             for (int y : adj[x])
-                branch(y, m);
+                branch(y, m, p);
         };
-        branch(r, 0);
+        branch(r, 0, -1);
     }
 };
 
@@ -293,13 +299,13 @@ int path_path(array2d& dp, array2d& pdp, const array2d& matrix, const tree& t1, 
     return sol;
 }
 
-// find the root of the tree containing node x in the forest m
-int find_root(const tree& t, const mask m, int x)
+// find the root of the tree containing branching node u in the forest m
+int find_root(const tree& t, mask m, int u)
 {
-    // go up if x isn't a branching node or is a branching node included in the forest m
-    while (x != -1 && (t.rb[x] == -1 || (m & in(t.rb[x]))))
-        x = t.par[x];
-    return x;
+    // since branching nodes are topologically sorted, take the branching parent of
+    // the lowest indexed branching ancestor of x in the current forest
+    m &= in(u) | t.ba[u];
+    return t.bp[tz(m)];
 }
 
 // generic bipartite matching dp: D is weight matrix, k index on left side, m mask of right side
@@ -409,7 +415,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // path  x..z in t1
         int z = t1.b[u];
-        int x = find_root(t1, rx, z);
+        int x = find_root(t1, rx, u);
         ra.push_back(x);
 
         // don't remove leaves
@@ -437,7 +443,7 @@ int forest_forest(const tree& t1, const tree& t2, const array2d& matrix, mask rx
 
         // path y..w in t2
         int w = t2.b[v];
-        int y = find_root(t2, ry, w);
+        int y = find_root(t2, ry, v);
         rb.push_back(y);
 
         // don't remove leaves
